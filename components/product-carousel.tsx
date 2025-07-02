@@ -23,7 +23,7 @@ export default function ProductCarousel({ images, video, productName }: ProductC
     allMedia.push({ _type: "video", asset: video })
   }
 
-  const getUrl = (media: any, w = 600, h = 600) => {
+  const getUrl = (media: any, w = 600, h = 400) => {
     const builder = urlFor(media)
     return builder ? builder.width(w).height(h).url() : "/placeholder.svg"
   }
@@ -57,16 +57,16 @@ export default function ProductCarousel({ images, video, productName }: ProductC
 
   if (allMedia.length === 0) {
     return (
-      <div className="aspect-square bg-gray-200 rounded-lg flex items-center justify-center">
+      <div className="w-full max-w-lg aspect-[4/3] bg-gray-200 rounded-lg flex items-center justify-center">
         <span className="text-gray-500">Sem imagem</span>
       </div>
     )
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 max-w-lg mx-auto">
       {/* Imagem/Vídeo Principal */}
-      <div className="relative aspect-square bg-white rounded-lg overflow-hidden group shadow-md">
+      <div className="relative w-full aspect-[4/3] bg-white rounded-lg overflow-hidden group shadow-md">
         {currentMedia._type === "video" && showVideo ? (
           <video
             controls
@@ -82,8 +82,9 @@ export default function ProductCarousel({ images, video, productName }: ProductC
               src={getUrl(currentMedia)}
               alt={currentMedia.alt || productName}
               fill
-              sizes="(max-width: 768px) 100vw, 600px"
-              className="object-contain bg-white transition-transform duration-500 group-hover:scale-102"
+              className="object-contain bg-white transition-transform duration-500 group-hover:scale-105"
+              sizes="(max-width: 640px) 100vw, 600px"
+              priority
             />
             {currentMedia._type === "video" && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/20">
@@ -151,7 +152,8 @@ export default function ProductCarousel({ images, video, productName }: ProductC
               <Image
                 src={getUrl(media, 64, 64)}
                 alt={`${productName} ${index + 1}`}
-                fill
+                width={64}
+                height={64}
                 className="object-cover"
               />
               {media._type === "video" && (

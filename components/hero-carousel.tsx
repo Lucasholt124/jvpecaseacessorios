@@ -80,7 +80,6 @@ export default function HeroCarousel() {
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % banners.length)
   const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + banners.length) % banners.length)
   const togglePause = () => setIsPaused((prev) => !prev)
-
   const handleCTAClick = () => {
     router.push("/produtos")
   }
@@ -89,13 +88,20 @@ export default function HeroCarousel() {
 
   return (
     <div
-      className="relative w-full min-h-[320px] md:min-h-[450px] lg:min-h-[600px] overflow-hidden bg-gray-200"
+      className="relative w-full max-w-screen-xl mx-auto
+                 aspect-[3/2] sm:aspect-[4/3] md:aspect-[16/7] lg:aspect-[16/8] xl:aspect-[16/9]
+                 overflow-hidden bg-gray-200 rounded-md"
       role="region"
       aria-label="Carrossel de banners"
     >
       {banners.map((banner, index) => {
         const imageUrl = banner.image
-          ? urlFor(banner.image)?.width(1920).height(800).fit("crop").auto("format").url() ?? placeholderImage.src
+          ? urlFor(banner.image)
+              ?.width(1920)
+              .height(1080)
+              .fit("clip")
+              .auto("format")
+              .url() ?? placeholderImage.src
           : placeholderImage.src
         const isActive = index === currentSlide
         const objectPosition = getObjectPosition(banner.image)
@@ -113,7 +119,7 @@ export default function HeroCarousel() {
               alt={banner.image?.alt || banner.title || "Banner"}
               fill
               style={{ objectPosition }}
-              className="object-cover"
+              className="object-contain sm:object-contain md:object-cover"
               priority={isActive}
               sizes="100vw"
             />
@@ -123,13 +129,14 @@ export default function HeroCarousel() {
 
             {/* Conteúdo do banner */}
             <div className="absolute inset-0 flex items-center justify-center px-4">
-              <div className="max-w-4xl text-center text-white space-y-6 md:space-y-8 px-6 py-8
-                backdrop-blur-sm bg-black/30 rounded-lg
-                mx-auto
-                w-full
-                md:w-3/4
-                lg:w-2/3
-              ">
+              <div
+                className="max-w-4xl text-center text-white space-y-6 md:space-y-8 px-6 py-8
+                  backdrop-blur-sm bg-black/30 rounded-lg
+                  mx-auto
+                  w-full
+                  md:w-3/4
+                  lg:w-2/3"
+              >
                 <h1 className="text-2xl md:text-4xl lg:text-5xl font-extrabold drop-shadow-lg">
                   {banner.title}
                 </h1>

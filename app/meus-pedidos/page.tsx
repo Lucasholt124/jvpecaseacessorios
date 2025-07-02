@@ -1,5 +1,6 @@
 import { getCurrentUser } from "@/lib/auth"
 import { redirect } from "next/navigation"
+import { prisma } from "@/lib/prisma"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -8,53 +9,21 @@ import Link from "next/link"
 import { formatPrice } from "@/lib/utils"
 
 interface OrderItem {
-  name: string
+  id: string
+  productName: string
   quantity: number
   price: number
 }
 
 interface Order {
   id: string
-  date: string
+  createdAt: string
   status: "processing" | "shipped" | "delivered" | "cancelled"
   total: number
   paymentMethod: string
   items: OrderItem[]
-  tracking?: string
+  tracking?: string | null
 }
-
-// Simulação de pedidos (em produção viria do banco de dados)
-const mockOrders: Order[] = [
-  {
-    id: "order_1234567890",
-    date: "2024-01-15",
-    status: "delivered",
-    total: 299.9,
-    paymentMethod: "PIX",
-    items: [
-      { name: "Filtro de Ar Esportivo", quantity: 1, price: 89.9 },
-      { name: "Óleo Motor 5W30", quantity: 2, price: 105.0 },
-    ],
-    tracking: "BR123456789",
-  },
-  {
-    id: "order_0987654321",
-    date: "2024-01-20",
-    status: "shipped",
-    total: 159.9,
-    paymentMethod: "Cartão de Crédito",
-    items: [{ name: "Pastilha de Freio Dianteira", quantity: 1, price: 159.9 }],
-    tracking: "BR987654321",
-  },
-  {
-    id: "order_1122334455",
-    date: "2024-01-22",
-    status: "processing",
-    total: 89.9,
-    paymentMethod: "PIX",
-    items: [{ name: "Lâmpada LED H7", quantity: 2, price: 44.95 }],
-  },
-]
 
 function getStatusInfo(status: Order["status"]) {
   const statusMap = {
@@ -66,11 +35,42 @@ function getStatusInfo(status: Order["status"]) {
   return statusMap[status] || statusMap.processing
 }
 
+// ... imports e interfaces iguais
+
 export default async function MeusPedidosPage() {
   const user = await getCurrentUser()
+  if (!user) redirect("/login")
 
-  if (!user) {
-    redirect("/login")
+  const orders = await prisma.order.findMany({
+    where: { userId: user.id },
+    orderBy: { createdAt: "desc" },
+    include: {
+      items: {
+        select: {
+          id: true,
+          name: true,
+          quantity: true,
+          price: true,
+        },
+      },
+    },
+  })
+
+  const normalizeStatus = (status: string): "processing" | "shipped" | "delivered" | "cancelled" => {
+    switch (status) {
+      case "PENDING":
+      case "CONFIRMED":
+      case "PROCESSING":
+        return "processing"
+      case "SHIPPED":
+        return "shipped"
+      case "DELIVERED":
+        return "delivered"
+      case "CANCELLED":
+        return "cancelled"
+      default:
+        return "processing"
+    }
   }
 
   return (
@@ -80,7 +80,7 @@ export default async function MeusPedidosPage() {
         <p className="text-gray-600">Acompanhe o status dos seus pedidos</p>
       </div>
 
-      {mockOrders.length === 0 ? (
+      {orders.length === 0 ? (
         <Card>
           <CardContent className="p-8 text-center">
             <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -93,8 +93,8 @@ export default async function MeusPedidosPage() {
         </Card>
       ) : (
         <div className="space-y-6">
-          {mockOrders.map((order: Order) => {
-            const statusInfo = getStatusInfo(order.status)
+          {orders.map((order) => {
+            const statusInfo = getStatusInfo(normalizeStatus(order.status))
             const StatusIcon = statusInfo.icon
 
             return (
@@ -105,7 +105,7 @@ export default async function MeusPedidosPage() {
                       <CardTitle className="text-lg">Pedido #{order.id}</CardTitle>
                       <CardDescription className="flex items-center gap-2 mt-1">
                         <Calendar className="w-4 h-4" />
-                        {new Date(order.date).toLocaleDateString("pt-BR")}
+                        {new Date(order.createdAt).toLocaleDateString("pt-BR")}
                       </CardDescription>
                     </div>
                     <Badge className={statusInfo.color}>
@@ -116,13 +116,12 @@ export default async function MeusPedidosPage() {
                 </CardHeader>
 
                 <CardContent className="space-y-4">
-                  {/* Itens do Pedido */}
                   <div>
                     <h4 className="font-semibold mb-2">Itens do Pedido</h4>
                     <div className="space-y-2">
-                      {order.items.map((item: OrderItem, index: number) => (
+                      {order.items.map((item) => (
                         <div
-                          key={index}
+                          key={item.id}
                           className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0"
                         >
                           <div>
@@ -135,7 +134,6 @@ export default async function MeusPedidosPage() {
                     </div>
                   </div>
 
-                  {/* Informações de Pagamento */}
                   <div className="flex items-center justify-between pt-4 border-t">
                     <div className="flex items-center gap-2">
                       <CreditCard className="w-4 h-4 text-gray-500" />
@@ -147,23 +145,8 @@ export default async function MeusPedidosPage() {
                     </div>
                   </div>
 
-                  {/* Rastreamento */}
-                  {order.tracking && (
-                    <div className="bg-blue-50 p-3 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium text-blue-800">Código de Rastreamento</p>
-                          <p className="text-blue-600 font-mono">{order.tracking}</p>
-                        </div>
-                        <Button variant="outline" size="sm">
-                          <Truck className="w-4 h-4 mr-2" />
-                          Rastrear
-                        </Button>
-                      </div>
-                    </div>
-                  )}
+                  {/* REMOVIDO rastreamento pois não existe */}
 
-                  {/* Ações */}
                   <div className="flex gap-2 pt-4">
                     <Button variant="outline" size="sm" asChild>
                       <Link href={`/pedido/${order.id}`}>
@@ -171,13 +154,17 @@ export default async function MeusPedidosPage() {
                         Ver Detalhes
                       </Link>
                     </Button>
-                    {order.status === "delivered" && (
-                      <Button variant="outline" size="sm">
-                        Avaliar Produtos
+                    {normalizeStatus(order.status) === "delivered" && (
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/pedido/${order.id}/avaliar`}>Avaliar Produtos</Link>
                       </Button>
                     )}
-                    {order.status === "processing" && (
-                      <Button variant="destructive" size="sm">
+                    {normalizeStatus(order.status) === "processing" && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => alert(`Cancelar pedido ${order.id} - implemente a ação aqui`)}
+                      >
                         Cancelar Pedido
                       </Button>
                     )}

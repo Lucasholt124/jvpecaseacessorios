@@ -26,7 +26,7 @@ export default function Footer() {
             </p>
             <div className="flex space-x-4">
               <Link
-                href="https://facebook.com/jvpecaseacessorios"
+                href="https://www.instagram.com/jv_pecas_acessorios?igsh=MWlwcGUzbnN0NWd1cg=="
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-300 hover:text-black transition-colors"
@@ -35,22 +35,13 @@ export default function Footer() {
                 <Facebook className="w-6 h-6" aria-hidden="true" />
               </Link>
               <Link
-                href="https://instagram.com/jvpecaseacessorios"
+                href="https://www.instagram.com/jv_pecas_acessorios?igsh=MWlwcGUzbnN0NWd1cg=="
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-300 hover:text-black transition-colors"
                 aria-label="Instagram da JVPECASEACESSORIOS"
               >
                 <Instagram className="w-6 h-6" aria-hidden="true" />
-              </Link>
-              <Link
-                href="https://twitter.com/jvpecaseacessorios"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-300 hover:text-black transition-colors"
-                aria-label="Twitter da JVPECASEACESSORIOS"
-              >
-                <Twitter className="w-6 h-6" aria-hidden="true" />
               </Link>
             </div>
           </nav>
@@ -75,11 +66,6 @@ export default function Footer() {
                   Ofertas
                 </Link>
               </li>
-              <li>
-                <Link href="/sobre" className="hover:text-black transition-colors">
-                  Sobre Nós
-                </Link>
-              </li>
             </ul>
           </nav>
 
@@ -94,12 +80,12 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/trocas-devolucoes" className="hover:text-black transition-colors">
+                <Link href="/contato" className="hover:text-black transition-colors">
                   Trocas e Devoluções
                 </Link>
               </li>
               <li>
-                <Link href="/rastrear-pedido" className="hover:text-black transition-colors">
+                <Link href="/meus-pedidos" className="hover:text-black transition-colors">
                   Rastrear Pedido
                 </Link>
               </li>

@@ -40,7 +40,6 @@ export async function POST(request: NextRequest) {
         complement: address.complement?.trim() || "",
       },
     }
-
     const preference = await createMercadoPagoPreference(customerData)
 
     return NextResponse.json(preference)

@@ -38,11 +38,12 @@ export async function DELETE(req: NextRequest) {
     if (!user)
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
-    const body: WishlistRequestBody = await req.json();
-    if (!body.productId)
+    const url = new URL(req.url);
+    const productId = url.searchParams.get("productId");
+    if (!productId)
       return NextResponse.json({ error: "Produto não informado" }, { status: 400 });
 
-    const result = await removeFromWishlist(user.id, body.productId);
+    const result = await removeFromWishlist(user.id, productId);
     if (result.success) return NextResponse.json({ success: true });
 
     return NextResponse.json(

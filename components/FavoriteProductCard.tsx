@@ -23,7 +23,7 @@ export default function FavoriteProductCard({ product }: Props) {
   const [isFavorited, setIsFavorited] = useState(true);
   const [loading, setLoading] = useState(false);
 
-  const { addItem } = useCartStore();
+  const addItem = useCartStore((state) => state.addItem);
 
   async function toggleFavorite() {
     if (loading) return;
@@ -32,7 +32,9 @@ export default function FavoriteProductCard({ product }: Props) {
     try {
       const res = await fetch("/api/wishlist", {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ productId: product.id }),
       });
 
@@ -43,7 +45,8 @@ export default function FavoriteProductCard({ product }: Props) {
 
       setIsFavorited(false);
     } catch (error) {
-      alert((error as Error).message || "Erro ao atualizar favoritos");
+      console.error(error);
+      alert("Erro ao remover dos favoritos.");
     } finally {
       setLoading(false);
     }
@@ -56,7 +59,7 @@ export default function FavoriteProductCard({ product }: Props) {
       price: product.price,
       image: product.image,
       slug: product.slug,
-      stock: 1,
+      stock: 1, // você pode ajustar isso conforme sua lógica de estoque
     });
   }
 
@@ -75,39 +78,48 @@ export default function FavoriteProductCard({ product }: Props) {
             onClick={toggleFavorite}
             disabled={loading}
             aria-label="Remover dos favoritos"
-            className="absolute top-2 right-2 p-2 rounded text-red-600 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
-            type="button"
+            className={`absolute top-2 right-2 p-2 rounded-full focus:outline-none focus:ring-2 focus:ring-red-500 ${
+              loading ? "text-red-300 cursor-not-allowed" : "text-red-600 hover:text-red-700"
+            }`}
           >
-            <Heart fill="red" strokeWidth={2} size={24} />
+            <Heart
+              size={24}
+              strokeWidth={2}
+              fill={!loading ? "red" : "none"}
+            />
           </button>
         </div>
 
         <div className="space-y-3">
           <Link href={`/produto/${product.slug}`}>
-            <h3 className="font-semibold line-clamp-2 cursor-pointer hover:text-blue-600 transition-colors">
+            <h3 className="font-semibold line-clamp-2 hover:text-blue-600 transition-colors cursor-pointer">
               {product.name}
             </h3>
           </Link>
 
-          <div className="flex items-center justify-between">
-            <span className="text-xl font-bold text-primary">
-              R$ {product.price.toFixed(2)}
-            </span>
+          <div className="text-xl font-bold text-primary">
+            R$ {product.price.toFixed(2)}
           </div>
 
           <div className="flex gap-2">
-            <Button size="sm" className="flex-1" type="button" onClick={handleAddToCart}>
-              <ShoppingCart className="w-4 h-4 mr-2" />
+            <Button
+              size="sm"
+              className="flex-1 flex items-center justify-center gap-2"
+              onClick={handleAddToCart}
+            >
+              <ShoppingCart className="w-4 h-4" />
               Adicionar
             </Button>
 
-            {/* Link envolvendo o botão para evitar erro do 'as' */}
-            <Link href={`/produto/${product.slug}`} passHref legacyBehavior>
-              <a>
-                <Button variant="outline" size="sm" type="button">
-                  Ver
-                </Button>
-              </a>
+            <Link href={`/produto/${product.slug}`}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="flex items-center justify-center"
+              >
+                Ver
+              </Button>
             </Link>
           </div>
         </div>
