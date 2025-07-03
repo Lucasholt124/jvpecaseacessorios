@@ -6,13 +6,12 @@ import { storeTempCartData } from "./cart-storage"
 import { generateOrderId } from "./utils"
 import { prisma } from "./prisma"
 import { umamiTrackCheckoutSuccessEvent } from "./umami-enhanced"
-import type { MercadoPagoItem, CartItem } from "./types"
-// import { PaymentStatus } from "@prisma/client"
+import type { MercadoPagoItem } from "./types"
+
 enum PaymentStatus {
   APPROVED = "APPROVED",
   PENDING = "PENDING",
   REJECTED = "REJECTED",
-  // Add other statuses as needed
 }
 
 interface CustomerData {
@@ -46,6 +45,8 @@ export async function createMercadoPagoPreference(customerData: CustomerData) {
       discount = await calculateCouponDiscount(customerData.couponCode, subtotal)
     }
 
+    const shippingCost = await calculateShipping(customerData.address.zip_code)
+
     const items: MercadoPagoItem[] = cart.map((item) => ({
       id: item.product._id,
       title: item.product.name,
@@ -56,14 +57,15 @@ export async function createMercadoPagoPreference(customerData: CustomerData) {
       description: item.product.description,
     }))
 
-    const shippingCost = await calculateShipping(customerData.address.zip_code)
-    items.push({
-      id: "shipping",
-      title: "Frete",
-      quantity: 1,
-      unit_price: shippingCost,
-      currency_id: "BRL",
-    })
+    if (shippingCost > 0) {
+      items.push({
+        id: "shipping",
+        title: "Frete",
+        quantity: 1,
+        unit_price: shippingCost,
+        currency_id: "BRL",
+      })
+    }
 
     if (discount > 0) {
       items.push({
@@ -76,6 +78,7 @@ export async function createMercadoPagoPreference(customerData: CustomerData) {
     }
 
     const externalReference = generateOrderId()
+
     const paymentData = {
       items,
       payer: {
@@ -133,8 +136,6 @@ export async function createMercadoPagoPreference(customerData: CustomerData) {
       total: subtotal + shippingCost - discount,
     })
 
-    console.log("✅ Preferência criada:", response.id)
-
     return {
       preferenceId: response.id,
       initPoint: response.init_point,
@@ -149,23 +150,6 @@ export async function createMercadoPagoPreference(customerData: CustomerData) {
 
 export async function processPaymentSuccess(paymentId: string, externalReference: string) {
   try {
-    const order = await prisma.order.create({
-      data: {
-        paymentId,
-        externalReference,
-        status: "CONFIRMED",
-        paymentStatus: PaymentStatus.APPROVED,
-        createdAt: new Date(),
-        customerEmail: "example@email.com", // Substituir por valor real
-        customerName: "Nome do Cliente",    // Substituir por valor real
-        subtotal: 0,                         // Substituir por valor real
-        shippingCost: 0,                     // Substituir por valor real
-        discount: 0,                         // Substituir por valor real
-        total: 0,                            // Substituir por valor real
-        shippingAddress: {},                // Substituir por valor real
-      },
-    })
-
     await umamiTrackCheckoutSuccessEvent({
       orderId: externalReference,
       paymentId,
@@ -175,8 +159,7 @@ export async function processPaymentSuccess(paymentId: string, externalReference
 
     await clearCart()
 
-    console.log("✅ Pagamento processado:", order.id)
-    return { success: true, orderId: order.id }
+    return { success: true, orderId: externalReference }
   } catch (error) {
     console.error("❌ Erro ao processar sucesso:", error)
     return { success: false, error: "Erro interno" }

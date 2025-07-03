@@ -50,10 +50,7 @@ export default function HeroCarousel() {
         const fetched = await getBanners()
         const correctedBanners = (fetched || []).map((banner: Banner) => {
           if (banner.buttonLink?.toLowerCase() === "/produtos") {
-            return {
-              ...banner,
-              buttonLink: "/produtos",
-            }
+            return { ...banner, buttonLink: "/produtos" }
           }
           return banner
         })
@@ -80,9 +77,7 @@ export default function HeroCarousel() {
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % banners.length)
   const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + banners.length) % banners.length)
   const togglePause = () => setIsPaused((prev) => !prev)
-  const handleCTAClick = () => {
-    router.push("/produtos")
-  }
+  const handleCTAClick = () => router.push("/produtos")
 
   if (banners.length === 0) return null
 
@@ -96,12 +91,7 @@ export default function HeroCarousel() {
     >
       {banners.map((banner, index) => {
         const imageUrl = banner.image
-          ? urlFor(banner.image)
-              ?.width(1920)
-              .height(1080)
-              .fit("clip")
-              .auto("format")
-              .url() ?? placeholderImage.src
+          ? urlFor(banner.image)?.width(1920).height(1080).fit("clip").auto("format").url() ?? placeholderImage.src
           : placeholderImage.src
         const isActive = index === currentSlide
         const objectPosition = getObjectPosition(banner.image)
@@ -124,19 +114,12 @@ export default function HeroCarousel() {
               sizes="100vw"
             />
 
-            {/* Overlay escuro para melhorar contraste do texto */}
+            {/* Escurecimento para contraste */}
             <div className="absolute inset-0 bg-black/40" aria-hidden="true" />
 
-            {/* Conteúdo do banner */}
+            {/* Conteúdo centralizado */}
             <div className="absolute inset-0 flex items-center justify-center px-4">
-              <div
-                className="max-w-4xl text-center text-white space-y-6 md:space-y-8 px-6 py-8
-                  backdrop-blur-sm bg-black/30 rounded-lg
-                  mx-auto
-                  w-full
-                  md:w-3/4
-                  lg:w-2/3"
-              >
+              <div className="max-w-4xl text-center text-white space-y-6 md:space-y-8 px-6 py-8 backdrop-blur-sm bg-black/30 rounded-lg mx-auto w-full md:w-3/4 lg:w-2/3">
                 <h1 className="text-2xl md:text-4xl lg:text-5xl font-extrabold drop-shadow-lg">
                   {banner.title}
                 </h1>
@@ -148,7 +131,8 @@ export default function HeroCarousel() {
                 {banner.buttonText && banner.buttonLink && (
                   <button
                     onClick={handleCTAClick}
-                    className="bg-yellow-400 text-black hover:bg-yellow-300 px-8 py-3 rounded-lg font-semibold transition-colors shadow-md"
+                    className="bg-yellow-400 text-black hover:bg-yellow-300 px-8 py-3 rounded-lg font-semibold
+                      transition-all duration-150 active:scale-95 hover:shadow-lg"
                   >
                     {banner.buttonText}
                   </button>
@@ -159,27 +143,31 @@ export default function HeroCarousel() {
         )
       })}
 
-      {/* Controles */}
+      {/* Botões de navegação com animação */}
       <button
         onClick={prevSlide}
         aria-label="Slide anterior"
-        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/50 text-white p-2 rounded-full z-30"
+        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/50 text-white p-2 rounded-full z-30
+          transition-transform duration-150 active:scale-90 hover:shadow-lg"
       >
         <ChevronLeft className="w-6 h-6" />
       </button>
+
       <button
         onClick={nextSlide}
         aria-label="Próximo slide"
-        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/50 text-white p-2 rounded-full z-30"
+        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/50 text-white p-2 rounded-full z-30
+          transition-transform duration-150 active:scale-90 hover:shadow-lg"
       >
         <ChevronRight className="w-6 h-6" />
       </button>
 
-      {/* Botão Pausar/Reproduzir */}
+      {/* Botão de pausa/reproduzir com animação */}
       <button
         onClick={togglePause}
         aria-label={isPaused ? "Reproduzir carrossel" : "Pausar carrossel"}
-        className="absolute bottom-4 right-4 bg-white/30 hover:bg-white/50 text-white p-2 rounded-full z-30"
+        className="absolute bottom-4 right-4 bg-white/30 hover:bg-white/50 text-white p-2 rounded-full z-30
+          transition-transform duration-150 active:scale-90 hover:shadow-lg"
       >
         {isPaused ? <Play className="w-5 h-5" /> : <Pause className="w-5 h-5" />}
       </button>

@@ -1,29 +1,32 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState } from "react"
 import Image from "next/image"
-import { ChevronLeft, ChevronRight, Play, Pause } from "lucide-react"
+import { ChevronLeft, ChevronRight, Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { urlFor } from "@/lib/sanity"
 
+interface Media {
+  _type: "image" | "video"
+  asset: { _ref?: string; _type?: string; url?: string }
+  alt?: string
+}
+
 interface ProductCarouselProps {
-  images: any[]
-  video?: any
+  images: Media[]
+  video?: Media
   productName: string
 }
 
 export default function ProductCarousel({ images, video, productName }: ProductCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [showVideo, setShowVideo] = useState(false)
-  const [paused, setPaused] = useState(false)
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  const allMedia = [...images]
-  if (video) {
-    allMedia.push({ _type: "video", asset: video })
-  }
+  const allMedia: Media[] = [...images]
+  if (video) allMedia.push({ ...video, _type: "video" })
 
-  const getUrl = (media: any, w = 600, h = 400) => {
+  const getUrl = (media: Media, w = 600, h = 400): string => {
+    if (media._type === "video" && media.asset.url) return media.asset.url
     const builder = urlFor(media)
     return builder ? builder.width(w).height(h).url() : "/placeholder.svg"
   }
@@ -43,35 +46,25 @@ export default function ProductCarousel({ images, video, productName }: ProductC
     setShowVideo(allMedia[index]._type === "video")
   }
 
-  const togglePaused = () => {
-    setPaused((prev) => !prev)
-  }
-
-  useEffect(() => {
-    if (allMedia.length <= 1 || paused) return
-    intervalRef.current = setInterval(() => nextSlide(), 5000)
-    return () => clearInterval(intervalRef.current!)
-  }, [paused, allMedia.length])
-
   const currentMedia = allMedia[currentIndex]
 
   if (allMedia.length === 0) {
     return (
       <div className="w-full max-w-lg aspect-[4/3] bg-gray-200 rounded-lg flex items-center justify-center">
-        <span className="text-gray-500">Sem imagem</span>
+        <span className="text-gray-500">Sem mídia</span>
       </div>
     )
   }
 
   return (
     <div className="space-y-4 max-w-lg mx-auto">
-      {/* Imagem/Vídeo Principal */}
-      <div className="relative w-full aspect-[4/3] bg-white rounded-lg overflow-hidden group shadow-md">
+      {/* Principal */}
+      <div className="relative w-full aspect-[4/3] bg-white rounded-lg overflow-hidden group shadow-sm">
         {currentMedia._type === "video" && showVideo ? (
           <video
             controls
-            className="w-full h-full object-contain"
-            poster={images.length > 0 ? getUrl(images[0]) : undefined}
+            className="w-full h-full object-contain bg-black"
+            poster={images[0] ? getUrl(images[0]) : undefined}
           >
             <source src={currentMedia.asset.url} type="video/mp4" />
             Seu navegador não suporta vídeo.
@@ -92,7 +85,7 @@ export default function ProductCarousel({ images, video, productName }: ProductC
                   variant="secondary"
                   size="lg"
                   onClick={() => setShowVideo(true)}
-                  className="rounded-full"
+                  className="rounded-full shadow"
                   aria-label="Reproduzir vídeo"
                 >
                   <Play className="w-6 h-6" />
@@ -102,35 +95,27 @@ export default function ProductCarousel({ images, video, productName }: ProductC
           </>
         )}
 
-        {/* Navegação */}
+        {/* Navegação lateral */}
         {allMedia.length > 1 && (
           <>
             <Button
               variant="outline"
               size="icon"
-              className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80"
               onClick={prevSlide}
               aria-label="Slide anterior"
+              className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 hover:bg-white"
             >
               <ChevronLeft className="w-5 h-5" />
             </Button>
+
             <Button
               variant="outline"
               size="icon"
-              className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80"
               onClick={nextSlide}
               aria-label="Próximo slide"
+              className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 hover:bg-white"
             >
               <ChevronRight className="w-5 h-5" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="absolute bottom-2 right-2 bg-white/80"
-              onClick={togglePaused}
-              aria-label={paused ? "Reproduzir carrossel" : "Pausar carrossel"}
-            >
-              {paused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
             </Button>
           </>
         )}
@@ -146,8 +131,9 @@ export default function ProductCarousel({ images, video, productName }: ProductC
               className={`relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
                 index === currentIndex ? "border-primary ring-2 ring-primary" : "border-gray-200"
               }`}
-              aria-label={`Selecionar slide ${index + 1}`}
+              aria-label={`Selecionar mídia ${index + 1}`}
               aria-current={index === currentIndex}
+              type="button"
             >
               <Image
                 src={getUrl(media, 64, 64)}

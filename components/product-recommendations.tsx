@@ -118,10 +118,7 @@ export default function ProductRecommendations({
             key={product._id}
             product={{
               ...product,
-              images: product.images.map((url) => ({
-                _type: "image",
-                asset: { _ref: url, _type: "reference" },
-              })), // convert string[] to ImageType[]
+              images: product.images, // pass as string[]
             }}
             rating={rating}
           />

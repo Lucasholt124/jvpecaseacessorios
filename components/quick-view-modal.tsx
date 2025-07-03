@@ -5,7 +5,7 @@ import Image from "next/image"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Star, ShoppingCart, Heart, Share2 } from "lucide-react"
+import { Star, ShoppingCart, Heart, Share2, Check, Loader2 } from "lucide-react"
 import Zoom from "react-medium-image-zoom"
 import { urlFor } from "@/lib/sanity"
 import { formatPrice } from "@/lib/utils"
@@ -22,6 +22,8 @@ export default function QuickViewModal({ product, isOpen, onClose, onAddToCart }
   const [selectedImage, setSelectedImage] = useState(0)
   const [quantity, setQuantity] = useState(1)
   const [favorites, setFavorites] = useState<string[]>([])
+  const [loading, setLoading] = useState(false)
+  const [added, setAdded] = useState(false)
 
   if (!product) return null
 
@@ -50,6 +52,21 @@ export default function QuickViewModal({ product, isOpen, onClose, onAddToCart }
 
   const isFavorite = favorites.includes(product._id)
 
+  const handleAddToCart = async () => {
+    if (product.stock === 0 || loading) return
+    setLoading(true)
+    try {
+      onAddToCart({ ...product, quantity })
+      setAdded(true)
+      toast.success("Produto adicionado ao carrinho!")
+      setTimeout(() => setAdded(false), 2000)
+    } catch (err) {
+      toast.error("Erro ao adicionar ao carrinho")
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleShare = () => {
     const shareData = {
       title: product.name,
@@ -75,7 +92,6 @@ export default function QuickViewModal({ product, isOpen, onClose, onAddToCart }
         </DialogHeader>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Galeria de Imagens */}
           <div className="space-y-4">
             <div className="relative aspect-square overflow-hidden rounded-lg bg-gray-100">
               {product.images?.[selectedImage] ? (
@@ -96,7 +112,6 @@ export default function QuickViewModal({ product, isOpen, onClose, onAddToCart }
               )}
             </div>
 
-            {/* Thumbnails */}
             {product.images?.length > 1 && (
               <div className="flex gap-3 overflow-x-auto">
                 {product.images.map((image: any, index: number) => (
@@ -123,7 +138,6 @@ export default function QuickViewModal({ product, isOpen, onClose, onAddToCart }
             )}
           </div>
 
-          {/* Informações do Produto */}
           <div className="space-y-6 flex flex-col justify-between">
             <div>
               <Badge variant="secondary" className="mb-3 px-3 py-1 rounded-full bg-blue-100 text-blue-700 font-semibold">
@@ -131,8 +145,7 @@ export default function QuickViewModal({ product, isOpen, onClose, onAddToCart }
               </Badge>
               <h2 className="text-3xl font-extrabold text-gray-900 mb-3">{product.name}</h2>
 
-              {/* Rating */}
-              <div className="flex items-center gap-2 mb-6" aria-label={`Avaliação média: 4.8 de 5 estrelas`}>
+              <div className="flex items-center gap-2 mb-6">
                 <div className="flex items-center space-x-0.5">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <Star key={star} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
@@ -141,7 +154,6 @@ export default function QuickViewModal({ product, isOpen, onClose, onAddToCart }
                 <span className="text-sm text-gray-600 font-medium">(4.8) 124 avaliações</span>
               </div>
 
-              {/* Preço */}
               <div className="space-y-2 mb-6">
                 <div className="flex items-center gap-5">
                   <span className="text-4xl font-extrabold text-primary">{formatPrice(product.price)}</span>
@@ -149,10 +161,9 @@ export default function QuickViewModal({ product, isOpen, onClose, onAddToCart }
                     <span className="text-xl text-gray-500 line-through">{formatPrice(product.compareAtPrice)}</span>
                   )}
                 </div>
-                <p className="text-sm text-green-600 font-medium">💳 12x de {formatPrice(product.price / 12)} sem juros</p>
+                <p className="text-sm text-green-600 font-medium">12x de {formatPrice(product.price / 12)} sem juros</p>
               </div>
 
-              {/* Descrição */}
               {product.description && (
                 <div className="mb-6">
                   <h3 className="font-semibold mb-2 text-lg">Descrição</h3>
@@ -160,7 +171,6 @@ export default function QuickViewModal({ product, isOpen, onClose, onAddToCart }
                 </div>
               )}
 
-              {/* Estoque */}
               <div className="flex items-center gap-3 mb-6">
                 <span className="text-sm text-gray-700 font-medium">Estoque:</span>
                 {product.stock > 0 ? (
@@ -174,11 +184,8 @@ export default function QuickViewModal({ product, isOpen, onClose, onAddToCart }
                 )}
               </div>
 
-              {/* Quantidade */}
               <div className="flex items-center gap-4 mb-6">
-                <label htmlFor="quantity" className="text-sm font-medium">
-                  Quantidade:
-                </label>
+                <label htmlFor="quantity" className="text-sm font-medium">Quantidade:</label>
                 <div className="flex items-center border rounded-lg overflow-hidden">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
@@ -186,36 +193,36 @@ export default function QuickViewModal({ product, isOpen, onClose, onAddToCart }
                     disabled={quantity <= 1}
                     aria-label="Diminuir quantidade"
                     type="button"
-                  >
-                    –
-                  </button>
-                  <span id="quantity" className="px-6 py-2 border-x select-none" aria-live="polite" aria-atomic="true">
-                    {quantity}
-                  </span>
+                  >–</button>
+                  <span id="quantity" className="px-6 py-2 border-x select-none" aria-live="polite">{quantity}</span>
                   <button
                     onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
                     className="px-4 py-2 hover:bg-gray-100 transition-colors disabled:opacity-50"
                     disabled={quantity >= product.stock}
                     aria-label="Aumentar quantidade"
                     type="button"
-                  >
-                    +
-                  </button>
+                  >+</button>
                 </div>
               </div>
             </div>
 
-            {/* Ações */}
             <div className="space-y-3">
               <div className="flex gap-4">
                 <Button
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-                  onClick={() => onAddToCart({ ...product, quantity })}
-                  disabled={product.stock === 0}
+                  className={`flex-1 text-white font-semibold flex items-center justify-center gap-2 transition-all active:scale-95
+                    ${added ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"}`}
+                  onClick={handleAddToCart}
+                  disabled={product.stock === 0 || loading}
                   aria-label={product.stock === 0 ? "Produto esgotado" : "Adicionar ao carrinho"}
                 >
-                  <ShoppingCart className="w-5 h-5 mr-2" />
-                  Adicionar ao Carrinho
+                  {loading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : added ? (
+                    <Check className="w-5 h-5" />
+                  ) : (
+                    <ShoppingCart className="w-5 h-5" />
+                  )}
+                  {loading ? "Adicionando..." : added ? "Adicionado!" : "Adicionar ao Carrinho"}
                 </Button>
 
                 <Button
@@ -223,9 +230,7 @@ export default function QuickViewModal({ product, isOpen, onClose, onAddToCart }
                   size="icon"
                   onClick={toggleFavorite}
                   aria-label={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
-                  className={`text-gray-700 hover:text-red-600 transition-colors ${
-                    isFavorite ? "text-red-600" : ""
-                  }`}
+                  className={`text-gray-700 hover:text-red-600 transition-colors ${isFavorite ? "text-red-600" : ""}`}
                 >
                   <Heart className="w-5 h-5" />
                 </Button>
@@ -241,25 +246,13 @@ export default function QuickViewModal({ product, isOpen, onClose, onAddToCart }
                 </Button>
               </div>
 
-              <Button variant="secondary" className="w-full" size="lg" onClick={() => alert("Comprar Agora funcionalidade ainda não implementada")}>
-                Comprar Agora
-              </Button>
+              <Button variant="secondary" className="w-full" size="lg" onClick={() => alert("Comprar Agora funcionalidade ainda não implementada")}>Comprar Agora</Button>
             </div>
 
-            {/* Garantias */}
             <div className="space-y-2 text-sm text-gray-600 mt-6">
-              <div className="flex items-center gap-2">
-                <span className="text-green-500 font-bold">✓</span>
-                <span>Frete grátis acima de R$ 100</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-green-500 font-bold">✓</span>
-                <span>Garantia de 30 dias</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-green-500 font-bold">✓</span>
-                <span>Pagamento seguro</span>
-              </div>
+              <div className="flex items-center gap-2"><span className="text-green-500 font-bold">✓</span><span>Frete grátis acima de R$ 100</span></div>
+              <div className="flex items-center gap-2"><span className="text-green-500 font-bold">✓</span><span>Garantia de 30 dias</span></div>
+              <div className="flex items-center gap-2"><span className="text-green-500 font-bold">✓</span><span>Pagamento seguro</span></div>
             </div>
           </div>
         </div>

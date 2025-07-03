@@ -6,14 +6,12 @@ import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ShoppingCart, Star, Eye, Heart } from "lucide-react"
+import { ShoppingCart, Star, Eye, Heart, Loader2, Check } from "lucide-react"
 import { getImageUrl } from "@/lib/sanity"
 import { formatPrice } from "@/lib/utils"
 import { useCartStore } from "@/lib/cart-store"
 import { toast } from "react-hot-toast"
 import { create } from "zustand"
-
-// --- WISHLIST STORE ---
 
 interface WishlistItem {
   id: string
@@ -44,8 +42,6 @@ const useWishlistStore = create<WishlistState>((set, get) => ({
   isInWishlist: (id) => get().items.some((item) => item.id === id),
 }))
 
-// --- QUICK VIEW MODAL ---
-
 interface ImageType {
   _type: string
   asset: { _ref: string }
@@ -58,7 +54,7 @@ interface Product {
   slug: { current: string }
   price: number
   compareAtPrice?: number
-  images: ImageType[]
+  images: string[]
   stock: number
   category: string
 }
@@ -71,6 +67,25 @@ interface QuickViewModalProps {
 }
 
 function QuickViewModal({ product, isOpen, onClose, onAddToCart }: QuickViewModalProps) {
+  const [loading, setLoading] = useState(false)
+  const [added, setAdded] = useState(false)
+
+  const handleClick = async () => {
+    if (loading || added || product.stock === 0) return
+
+    setLoading(true)
+    try {
+      await onAddToCart(product)
+      setAdded(true)
+      onClose()
+      setTimeout(() => setAdded(false), 2000)
+    } catch (error) {
+      console.error("Erro ao adicionar ao carrinho:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   if (!isOpen) return null
 
   const productImage = getImageUrl(product.images?.[0], 400, 400) || "/placeholder.png"
@@ -124,16 +139,24 @@ function QuickViewModal({ product, isOpen, onClose, onAddToCart }: QuickViewModa
               )}
             </div>
             <Button
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium"
-              disabled={product.stock === 0}
-              onClick={() => {
-                onAddToCart(product)
-                onClose()
-              }}
-              aria-label="Adicionar ao carrinho"
+              onClick={handleClick}
+              disabled={loading || product.stock === 0}
+              aria-label={product.stock === 0 ? "Produto esgotado" : "Adicionar ao carrinho"}
+              className={`font-medium text-white flex items-center gap-2 transition-all duration-150 active:scale-95
+                ${added ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"}`}
             >
-              <ShoppingCart className="w-4 h-4 mr-2" />
-              Adicionar ao carrinho
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : added ? (
+                <Check className="w-4 h-4" />
+              ) : (
+                <ShoppingCart className="w-4 h-4" />
+              )}
+              {loading
+                ? "Adicionando..."
+                : added
+                ? "Adicionado!"
+                : "Adicionar ao carrinho"}
             </Button>
           </div>
         </div>
@@ -141,8 +164,6 @@ function QuickViewModal({ product, isOpen, onClose, onAddToCart }: QuickViewModa
     </div>
   )
 }
-
-// --- PRODUCT CARD ---
 
 interface ProductCardProps {
   product: Product
@@ -162,7 +183,6 @@ export default function ProductCard({ product, rating }: ProductCardProps) {
     ? Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100)
     : 0
 
-  // WISHLIST STORE
   const addToWishlist = useWishlistStore((state) => state.addToWishlist)
   const removeFromWishlist = useWishlistStore((state) => state.removeFromWishlist)
   const isInWishlist = useWishlistStore((state) => state.isInWishlist)
@@ -173,12 +193,7 @@ export default function ProductCard({ product, rating }: ProductCardProps) {
     e.preventDefault()
     e.stopPropagation()
 
-    if (product.stock === 0) {
-      toast.error("Produto fora de estoque")
-      return
-    }
-
-    if (loading) return
+    if (product.stock === 0 || loading) return
 
     setLoading(true)
     addItem({
@@ -225,8 +240,6 @@ export default function ProductCard({ product, rating }: ProductCardProps) {
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               />
             </Link>
-
-            {/* Badges */}
             <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
               {hasDiscount && (
                 <Badge className="bg-red-500 hover:bg-red-600 text-white font-bold">
@@ -239,8 +252,6 @@ export default function ProductCard({ product, rating }: ProductCardProps) {
                 </Badge>
               )}
             </div>
-
-            {/* Floating actions */}
             <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
               <Button
                 size="sm"
@@ -258,21 +269,15 @@ export default function ProductCard({ product, rating }: ProductCardProps) {
               <Button
                 size="sm"
                 variant="secondary"
-                className={`w-10 h-10 p-0 rounded-full shadow bg-white/90 hover:bg-white ${
-                  isFavorite ? "text-red-600" : ""
-                }`}
+                className={`w-10 h-10 p-0 rounded-full shadow bg-white/90 hover:bg-white ${isFavorite ? "text-red-600" : ""}`}
                 onClick={toggleWishlist}
                 aria-label={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
               >
-                <Heart
-                  className="w-4 h-4"
-                  fill={isFavorite ? "currentColor" : "none"}
-                />
+                <Heart className="w-4 h-4" fill={isFavorite ? "currentColor" : "none"} />
               </Button>
             </div>
           </div>
 
-          {/* Product info */}
           <div className="p-4 space-y-3">
             <div>
               <Badge variant="secondary" className="text-xs mb-2 bg-blue-50 text-blue-700">
@@ -285,7 +290,6 @@ export default function ProductCard({ product, rating }: ProductCardProps) {
               </Link>
             </div>
 
-            {/* Rating */}
             {rating && rating.totalReviews > 0 && (
               <div className="flex items-center gap-2">
                 <div className="flex items-center">
@@ -296,7 +300,6 @@ export default function ProductCard({ product, rating }: ProductCardProps) {
               </div>
             )}
 
-            {/* Price and button */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <span className="text-2xl font-bold text-green-600">{formatPrice(product.price)}</span>
@@ -329,7 +332,6 @@ export default function ProductCard({ product, rating }: ProductCardProps) {
         </CardContent>
       </Card>
 
-      {/* Quick view modal */}
       <QuickViewModal
         product={product}
         isOpen={isQuickViewOpen}

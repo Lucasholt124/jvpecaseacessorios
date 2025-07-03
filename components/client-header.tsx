@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import CartDropdown from "@/components/cart-dropdown"
 import { Search, Menu, X, User, Heart, Phone, MapPin, Clock, LogOut, Package, Truck } from "lucide-react"
 import { useCartStore } from "@/lib/cart-store"
+import MobileMenu from "./mobile-menu"
 
 
 
@@ -257,97 +258,15 @@ export default function ClientHeader({ user, onLogout }: Props) {
       </nav>
 
       {/* Mobile Menu */}
-      {isMenuOpen && (
-        <div
-          id="mobile-menu"
-          className="fixed inset-0 top-[var(--header-height, 0px)] bg-black/50 z-40 md:hidden"
-          onClick={closeMenu}
-        >
-          <div
-            className="bg-white w-full max-w-sm h-full overflow-y-auto shadow-lg py-4 animate-slideInLeft"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Menu de navegação mobile"
-          >
-            <div className="container mx-auto px-4 space-y-4">
-              <form onSubmit={handleSearch} className="flex gap-2">
-                <Input
-                  type="text"
-                  placeholder="Buscar produtos..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 pl-4 pr-12 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-0"
-                  aria-label="Campo de busca de produtos no menu mobile"
-                />
-                <Button type="submit" aria-label="Buscar no menu mobile" className="bg-blue-600 hover:bg-blue-700 text-white">
-                  <Search className="h-4 w-4" aria-hidden="true" />
-                </Button>
-              </form>
-
-              <Link
-                href="/produtos"
-                className="block py-2 text-gray-700 hover:text-blue-600 font-medium"
-                onClick={closeMenu}
-              >
-                Todos os Produtos
-              </Link>
-              <Link
-                href="/categorias"
-                className="block py-2 text-gray-700 hover:text-blue-600 font-medium"
-                onClick={closeMenu}
-              >
-                Categorias
-              </Link>
-              <Link
-                href="/promocoes"
-                className="block py-2 text-gray-700 hover:text-blue-600 font-medium"
-                onClick={closeMenu}
-              >
-                Promoções
-              </Link>
-              <Link
-                href="/contato"
-                className="block py-2 text-gray-700 hover:text-blue-600 font-medium"
-                onClick={closeMenu}
-              >
-                Contato
-              </Link>
-              <div className="border-t pt-4 space-y-2">
-                {user ? (
-                  <>
-                    <Link
-                      href="/perfil"
-                      className="block py-2 text-blue-600 font-semibold hover:text-yellow-600"
-                      onClick={closeMenu}
-                      aria-label="Meu perfil"
-                    >
-                      Meu Perfil
-                    </Link>
-                    <button
-                      onClick={() => {
-                        handleLogout()
-                        closeMenu()
-                      }}
-                      className="w-full text-left py-2 text-red-600 hover:underline"
-                      aria-label="Sair da conta"
-                    >
-                      Sair
-                    </button>
-                  </>
-                ) : (
-                  <Link href="/login" className="block py-2 text-gray-700 hover:text-blue-600" onClick={closeMenu}>
-                    Entrar / Cadastrar
-                  </Link>
-                )}
-                <Link href="/favoritos" className="block py-2 text-gray-700 hover:text-blue-600" onClick={closeMenu}>
-                  Meus Favoritos
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <MobileMenu
+  isOpen={isMenuOpen}
+  onClose={closeMenu}
+  onSearch={(query) => {
+    router.push(`/busca?q=${encodeURIComponent(query)}`)
+  }}
+  user={user}
+  onLogout={handleLogout}
+/>
     </header>
   )
 }

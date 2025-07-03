@@ -51,8 +51,9 @@ function AddToCartButton({
 
   return (
     <Button
-      className={`w-full flex items-center justify-center gap-2 font-semibold transition-all
+      className={`w-full flex items-center justify-center gap-2 font-semibold transition-all duration-150
         ${added ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"}
+        hover:shadow-lg active:scale-95
       `}
       disabled={disabled || loading}
       onClick={handleClick}

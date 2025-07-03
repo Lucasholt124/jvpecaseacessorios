@@ -102,10 +102,8 @@ export default function HeroBanner() {
               sizes="100vw"
             />
 
-            {/* camada de escurecimento suave para contraste */}
             <div className="absolute inset-0 bg-black/40" aria-hidden="true" />
 
-            {/* conteúdo centralizado e responsivo */}
             <div className="absolute inset-0 flex items-center justify-center px-4">
               <div className="text-center text-white max-w-3xl space-y-6 md:space-y-8 px-6 py-8 backdrop-blur-sm bg-black/30 rounded-lg w-full md:w-3/4 lg:w-2/3">
                 <h1 className="text-3xl md:text-5xl font-extrabold drop-shadow-lg">{banner.title}</h1>
@@ -133,10 +131,11 @@ export default function HeroBanner() {
         )
       })}
 
-      {/* Botões de navegação */}
+      {/* Botões de navegação com animação */}
       <button
         onClick={prevSlide}
-        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/50 text-white p-2 rounded-full z-30"
+        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/50 text-white p-2 rounded-full z-30
+        transition-transform duration-150 active:scale-90 hover:shadow-lg"
         aria-label="Slide anterior"
       >
         <ChevronLeft className="w-6 h-6" />
@@ -144,16 +143,18 @@ export default function HeroBanner() {
 
       <button
         onClick={nextSlide}
-        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/50 text-white p-2 rounded-full z-30"
+        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/50 text-white p-2 rounded-full z-30
+        transition-transform duration-150 active:scale-90 hover:shadow-lg"
         aria-label="Próximo slide"
       >
         <ChevronRight className="w-6 h-6" />
       </button>
 
-      {/* Botão de pausa/reproduzir */}
+      {/* Botão de pausa/reproduzir com vida */}
       <button
         onClick={togglePause}
-        className="absolute bottom-4 right-4 bg-white/30 hover:bg-white/50 text-white p-2 rounded-full z-30"
+        className="absolute bottom-4 right-4 bg-white/30 hover:bg-white/50 text-white p-2 rounded-full z-30
+        transition-transform duration-150 active:scale-90 hover:shadow-lg"
         aria-label={paused ? "Reproduzir banner" : "Pausar banner"}
       >
         {paused ? <Play className="w-5 h-5" /> : <Pause className="w-5 h-5" />}
