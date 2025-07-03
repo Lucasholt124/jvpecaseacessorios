@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Loader2, CreditCard } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { toast } from "react-hot-toast"
 
 interface CheckoutButtonProps {
   userEmail: string
@@ -26,7 +27,7 @@ export default function CheckoutButton({
 
   const handleCheckout = async () => {
     if (!userEmail) {
-      alert("E-mail do usuário é obrigatório.")
+      toast.error("E-mail do usuário é obrigatório.")
       return
     }
 
@@ -52,10 +53,12 @@ export default function CheckoutButton({
       const isProd = process.env.NODE_ENV === "production"
       const redirectUrl = isProd ? initPoint : sandboxInitPoint
 
+      if (!redirectUrl) throw new Error("URL de pagamento inválida")
+
       window.location.href = redirectUrl
     } catch (err) {
       console.error("Erro no checkout:", err)
-      alert("Não foi possível iniciar o pagamento. Tente novamente.")
+      toast.error("Não foi possível iniciar o pagamento. Tente novamente.")
     } finally {
       setIsLoading(false)
     }

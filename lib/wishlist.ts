@@ -22,7 +22,7 @@ export async function addToWishlist(userId: string, productId: string) {
       data: { userId, productId },
     });
 
-    // Revalida a página favoritos
+    // Revalida a página favoritos para atualizar cache
     revalidatePath("/favoritos");
 
     return { success: true };

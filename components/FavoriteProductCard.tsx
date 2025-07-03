@@ -13,13 +13,15 @@ interface Product {
   price: number;
   image: string;
   slug: string;
+  stock?: number; // opcional para controlar estoque real
 }
 
 interface Props {
   product: Product;
+  onRemove?: (productId: string) => void; // callback para o componente pai
 }
 
-export default function FavoriteProductCard({ product }: Props) {
+export default function FavoriteProductCard({ product, onRemove }: Props) {
   const [isFavorited, setIsFavorited] = useState(true);
   const [loading, setLoading] = useState(false);
 
@@ -27,6 +29,10 @@ export default function FavoriteProductCard({ product }: Props) {
 
   async function toggleFavorite() {
     if (loading) return;
+
+    const confirmed = confirm("Tem certeza que deseja remover este item dos favoritos?");
+    if (!confirmed) return;
+
     setLoading(true);
 
     try {
@@ -44,6 +50,7 @@ export default function FavoriteProductCard({ product }: Props) {
       }
 
       setIsFavorited(false);
+      if (onRemove) onRemove(product.id);
     } catch (error) {
       console.error(error);
       alert("Erro ao remover dos favoritos.");
@@ -59,7 +66,7 @@ export default function FavoriteProductCard({ product }: Props) {
       price: product.price,
       image: product.image,
       slug: product.slug,
-      stock: 1, // você pode ajustar isso conforme sua lógica de estoque
+      stock: product.stock ?? 1, // usa estoque real se existir
     });
   }
 
@@ -82,11 +89,11 @@ export default function FavoriteProductCard({ product }: Props) {
               loading ? "text-red-300 cursor-not-allowed" : "text-red-600 hover:text-red-700"
             }`}
           >
-            <Heart
-              size={24}
-              strokeWidth={2}
-              fill={!loading ? "red" : "none"}
-            />
+            {loading ? (
+              <span className="animate-spin" aria-hidden="true">🔄</span>
+            ) : (
+              <Heart size={24} fill="red" color="red" />
+            )}
           </button>
         </div>
 
@@ -106,6 +113,7 @@ export default function FavoriteProductCard({ product }: Props) {
               size="sm"
               className="flex-1 flex items-center justify-center gap-2"
               onClick={handleAddToCart}
+              disabled={loading}
             >
               <ShoppingCart className="w-4 h-4" />
               Adicionar

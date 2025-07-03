@@ -134,7 +134,7 @@ export default function ClientHeader({ user, onLogout }: Props) {
             placeholder="Buscar produtos..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-4 pr-12 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-600 focus:ring-0"
+            className="w-full text-black pl-4 pr-12 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-600 focus:ring-0"
             aria-label="Campo de busca de produtos"
           />
           <Button
@@ -164,7 +164,10 @@ export default function ClientHeader({ user, onLogout }: Props) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleLogout}
+                 onClick={async () => {
+    await handleLogout()
+    closeMenu()
+  }}
                 className="hidden sm:flex items-center gap-1 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition-colors"
                 aria-label="Sair da conta"
               >

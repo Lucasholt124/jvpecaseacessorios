@@ -88,19 +88,20 @@ function SearchContent() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+    <div className="container mx-auto px-4 py-8 ">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 text-black">
         {/* Filtros */}
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 ">
           <Card>
-            <CardContent className="p-6 space-y-6">
+            <CardContent className="p-6 space-y-6 ">
               <div>
                 <h3 className="font-semibold mb-3">Buscar</h3>
                 <Input
-                  placeholder="Digite sua busca..."
-                  value={filters.query}
-                  onChange={(e) => handleFilterChange("query", e.target.value)}
-                />
+  placeholder="Digite sua busca..."
+  value={filters.query}
+  onChange={(e) => handleFilterChange("query", e.target.value)}
+  className="text-black "
+/>
               </div>
 
               <div>
