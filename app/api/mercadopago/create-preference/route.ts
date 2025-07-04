@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createMercadoPagoPreference } from "@/lib/mercadopago-actions-real"
+import { getCart } from "@/lib/cart-actions"  // Import direto para evitar fetch
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,6 +24,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Endereço completo é obrigatório" }, { status: 400 })
     }
 
+    // Sanitização e preparo dos dados
     const customerData = {
       email: email.trim().toLowerCase(),
       name: name.trim(),
@@ -43,23 +45,14 @@ export async function POST(request: NextRequest) {
 
     console.log("✅ Dados para preferência:", customerData)
 
-    // 🛒 Busca o carrinho através de fetch (por causa do cookie HttpOnly em produção)
-    const cartRes = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/cart`, {
-      method: "GET",
-      headers: {
-        Cookie: request.headers.get("cookie") || "",
-      },
-      cache: "no-store",
-    })
+    // Busca o carrinho diretamente da função backend, sem fetch
+    const cart = await getCart()
 
-    const cartData = await cartRes.json()
-    const cart = cartData.cart
-
-    if (!Array.isArray(cart) || cart.length === 0) {
+    if (!cart || cart.length === 0) {
       throw new Error("Carrinho vazio")
     }
 
-    // Cria a preferência
+    // Cria a preferência no Mercado Pago
     const preference = await createMercadoPagoPreference(customerData, cart)
 
     if (!preference) {
