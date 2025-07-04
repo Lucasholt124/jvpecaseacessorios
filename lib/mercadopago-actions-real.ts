@@ -1,8 +1,8 @@
 "use server"
 
 import { preference } from "./mercadopago"
-import { getCart, clearCart } from "./cart-actions"
-import type { MercadoPagoItem } from "./types"
+import { clearCart } from "./cart-actions"
+import type { MercadoPagoItem, CartItem } from "./types"
 import { storeTempCartData } from "./cart-storage"
 import { generateOrderId, calculateShipping } from "./utils"
 import { umamiTrackCheckoutSuccessEvent } from "./umami-enhanced"
@@ -26,10 +26,12 @@ interface CustomerData {
   }
 }
 
-export async function createMercadoPagoPreference(customerData: CustomerData) {
+export async function createMercadoPagoPreference(
+  customerData: CustomerData,
+  cart: CartItem[]
+) {
   try {
-    const cart = await getCart()
-    if (!cart.length) throw new Error("Carrinho vazio")
+    if (!cart || cart.length === 0) throw new Error("Carrinho vazio")
 
     const subtotal = cart.reduce(
       (sum, item) => sum + item.product.price * item.quantity,
@@ -44,9 +46,9 @@ export async function createMercadoPagoPreference(customerData: CustomerData) {
       quantity: item.quantity,
       unit_price: item.product.price,
       currency_id: "BRL",
-       picture_url: item.product.image ? urlFor(item.product.image)?.url?.() ?? "" : "",
-
-
+      picture_url: item.product.image
+        ? urlFor(item.product.image)?.url?.() ?? ""
+        : "",
       description: item.product.description,
     }))
 
@@ -137,7 +139,7 @@ export async function processPaymentSuccess(paymentId: string, externalReference
     await umamiTrackCheckoutSuccessEvent({
       orderId: externalReference,
       paymentId,
-      amount: 0, // Será atualizado via webhook depois
+      amount: 0, // será atualizado via webhook
       timestamp: new Date(),
     })
 
