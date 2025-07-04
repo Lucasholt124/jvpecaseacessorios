@@ -1,10 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createMercadoPagoPreference } from "@/lib/mercadopago-actions-real"
+import { cookies } from "next/headers"
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     console.log("📦 Dados recebidos:", body)
+    console.log("🔎 Cookies recebidos:", cookies().getAll())
 
 
     const { email, name, phone, address } = body
