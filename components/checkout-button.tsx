@@ -48,17 +48,32 @@ export default function CheckoutButton({
 
       if (!res.ok) throw new Error("Erro ao criar preferência de pagamento")
 
-      const { initPoint, sandboxInitPoint } = await res.json()
+      const data: {
+        initPoint?: string
+        sandboxInitPoint?: string
+      } = await res.json()
 
       const isProd = process.env.NODE_ENV === "production"
-      const redirectUrl = isProd ? initPoint : sandboxInitPoint
+      const redirectUrl = isProd ? data.initPoint : data.sandboxInitPoint
 
-      if (!redirectUrl) throw new Error("URL de pagamento inválida")
+      if (!redirectUrl) {
+        throw new Error("A URL de pagamento está ausente na resposta.")
+      }
+
+      // Verificação de segurança contra Open Redirect
+      const allowedDomains = ["https://www.mercadopago.com", "https://sandbox.mercadopago.com"]
+      const isValidRedirect = allowedDomains.some((domain) =>
+        redirectUrl.startsWith(domain)
+      )
+
+      if (!isValidRedirect) {
+        throw new Error("Redirecionamento bloqueado: URL de destino não permitida.")
+      }
 
       window.location.href = redirectUrl
-    } catch (err) {
+    } catch (err: any) {
       console.error("Erro no checkout:", err)
-      toast.error("Não foi possível iniciar o pagamento. Tente novamente.")
+      toast.error(err?.message || "Não foi possível iniciar o pagamento.")
     } finally {
       setIsLoading(false)
     }

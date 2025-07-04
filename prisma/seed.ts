@@ -1,13 +1,22 @@
 import { PrismaClient } from "@prisma/client"
 import bcrypt from "bcryptjs"
+import dotenv from "dotenv"
+
+dotenv.config()
 
 const prisma = new PrismaClient()
 
 async function main() {
   console.log("🌱 Iniciando seed do banco de dados...")
 
-  // Criar usuário admin
-  const adminPassword = await bcrypt.hash("admin123", 12)
+  // Obter senha do admin via .env ou usar fallback apenas em dev
+  const adminPasswordPlain = process.env.ADMIN_PASSWORD ?? "admin123"
+
+  if (!adminPasswordPlain) {
+    throw new Error("❌ A senha do administrador (ADMIN_PASSWORD) não está definida.")
+  }
+
+  const adminPassword = await bcrypt.hash(adminPasswordPlain, 12)
 
   const admin = await prisma.user.upsert({
     where: { email: "admin@jvpecas.com" },
@@ -28,89 +37,22 @@ async function main() {
 
   const shippingRates = [
     // PAC
-    {
-      zipCodeFrom: "00000000",
-      zipCodeTo: "99999999",
-      weight: 0.5,
-      price: 15,
-      days: 5,
-      carrier: "Correios",
-      service: "PAC",
-    },
-    {
-      zipCodeFrom: "00000000",
-      zipCodeTo: "99999999",
-      weight: 1,
-      price: 20,
-      days: 5,
-      carrier: "Correios",
-      service: "PAC",
-    },
-    {
-      zipCodeFrom: "00000000",
-      zipCodeTo: "99999999",
-      weight: 2,
-      price: 30,
-      days: 5,
-      carrier: "Correios",
-      service: "PAC",
-    },
-    {
-      zipCodeFrom: "00000000",
-      zipCodeTo: "99999999",
-      weight: 5,
-      price: 50,
-      days: 5,
-      carrier: "Correios",
-      service: "PAC",
-    },
+    { zipCodeFrom: "00000000", zipCodeTo: "99999999", weight: 0.5, price: 15, days: 5, carrier: "Correios", service: "PAC" },
+    { zipCodeFrom: "00000000", zipCodeTo: "99999999", weight: 1, price: 20, days: 5, carrier: "Correios", service: "PAC" },
+    { zipCodeFrom: "00000000", zipCodeTo: "99999999", weight: 2, price: 30, days: 5, carrier: "Correios", service: "PAC" },
+    { zipCodeFrom: "00000000", zipCodeTo: "99999999", weight: 5, price: 50, days: 5, carrier: "Correios", service: "PAC" },
 
     // SEDEX
-    {
-      zipCodeFrom: "00000000",
-      zipCodeTo: "99999999",
-      weight: 0.5,
-      price: 25,
-      days: 2,
-      carrier: "Correios",
-      service: "SEDEX",
-    },
-    {
-      zipCodeFrom: "00000000",
-      zipCodeTo: "99999999",
-      weight: 1,
-      price: 35,
-      days: 2,
-      carrier: "Correios",
-      service: "SEDEX",
-    },
-    {
-      zipCodeFrom: "00000000",
-      zipCodeTo: "99999999",
-      weight: 2,
-      price: 50,
-      days: 2,
-      carrier: "Correios",
-      service: "SEDEX",
-    },
-    {
-      zipCodeFrom: "00000000",
-      zipCodeTo: "99999999",
-      weight: 5,
-      price: 80,
-      days: 2,
-      carrier: "Correios",
-      service: "SEDEX",
-    },
+    { zipCodeFrom: "00000000", zipCodeTo: "99999999", weight: 0.5, price: 25, days: 2, carrier: "Correios", service: "SEDEX" },
+    { zipCodeFrom: "00000000", zipCodeTo: "99999999", weight: 1, price: 35, days: 2, carrier: "Correios", service: "SEDEX" },
+    { zipCodeFrom: "00000000", zipCodeTo: "99999999", weight: 2, price: 50, days: 2, carrier: "Correios", service: "SEDEX" },
+    { zipCodeFrom: "00000000", zipCodeTo: "99999999", weight: 5, price: 80, days: 2, carrier: "Correios", service: "SEDEX" },
   ]
 
-  await prisma.shippingRate.createMany({
-    data: shippingRates,
-  })
-
+  await prisma.shippingRate.createMany({ data: shippingRates })
   console.log("✅ Tarifas de frete criadas")
 
-  // Criar cupons de exemplo
+  // Criar cupons
   const coupons = [
     {
       code: "BEMVINDO10",
@@ -139,7 +81,6 @@ async function main() {
   }
 
   console.log("✅ Cupons criados")
-
   console.log("🎉 Seed concluído com sucesso!")
 }
 
