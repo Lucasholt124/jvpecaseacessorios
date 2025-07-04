@@ -6,6 +6,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     console.log("📦 Dados recebidos:", body)
 
+
     const { email, name, phone, address } = body
 
     if (!email) return NextResponse.json({ error: "Email é obrigatório" }, { status: 400 })
@@ -52,6 +53,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("❌ Erro ao criar preferência:", error instanceof Error ? error.message : error)
     console.error("📄 Stack:", error instanceof Error ? error.stack : null)
+
 
     return NextResponse.json(
       { error: "Erro interno do servidor" },

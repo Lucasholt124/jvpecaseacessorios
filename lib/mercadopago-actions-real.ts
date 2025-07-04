@@ -6,6 +6,7 @@ import type { MercadoPagoItem } from "./types"
 import { storeTempCartData } from "./cart-storage"
 import { generateOrderId, calculateShipping } from "./utils"
 import { umamiTrackCheckoutSuccessEvent } from "./umami-enhanced"
+import { urlFor } from "@/lib/sanity"
 
 interface CustomerData {
   email: string
@@ -43,7 +44,9 @@ export async function createMercadoPagoPreference(customerData: CustomerData) {
       quantity: item.quantity,
       unit_price: item.product.price,
       currency_id: "BRL",
-      picture_url: item.product.image,
+       picture_url: item.product.image ? urlFor(item.product.image)?.url?.() ?? "" : "",
+
+
       description: item.product.description,
     }))
 
