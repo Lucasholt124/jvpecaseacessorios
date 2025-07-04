@@ -122,10 +122,11 @@ export default function CheckoutForm({ cartTotal, cartItems }: CheckoutFormProps
     setIsLoading(true);
     try {
       const response = await fetch("/api/mercadopago/create-preference", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(customerData),
-      });
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  credentials: "include", // ← ESSENCIAL!
+  body: JSON.stringify(customerData),
+})
 
       if (!response.ok) throw new Error("Erro ao processar checkout");
 
