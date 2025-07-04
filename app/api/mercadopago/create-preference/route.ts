@@ -1,30 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createMercadoPagoPreference } from "@/lib/mercadopago-actions-real"
-import { getCart } from "@/lib/cart-actions"  // Import direto para evitar fetch
+import { getCart } from "@/lib/cart-actions"
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    console.log("📦 Dados recebidos:", body)
 
     const { email, name, phone, address } = body
 
-    // Validação dos dados
-    if (!email) return NextResponse.json({ error: "Email é obrigatório" }, { status: 400 })
-    if (!name) return NextResponse.json({ error: "Nome é obrigatório" }, { status: 400 })
-    if (!phone?.area_code || !phone?.number)
-      return NextResponse.json({ error: "Telefone é obrigatório" }, { status: 400 })
-    if (
-      !address?.zip_code ||
-      !address?.street_name ||
-      !address?.street_number ||
-      !address?.city ||
-      !address?.state
-    ) {
-      return NextResponse.json({ error: "Endereço completo é obrigatório" }, { status: 400 })
-    }
-
-    // Sanitização e preparo dos dados
     const customerData = {
       email: email.trim().toLowerCase(),
       name: name.trim(),
@@ -45,19 +28,15 @@ export async function POST(request: NextRequest) {
 
     console.log("✅ Dados para preferência:", customerData)
 
-    // Busca o carrinho diretamente da função backend, sem fetch
+    // 🧠 Aqui está a correção: sem fetch, acessa cookie via server
     const cart = await getCart()
 
     if (!cart || cart.length === 0) {
-      throw new Error("Carrinho vazio")
+      console.error("❌ Carrinho vazio (cookie não encontrado ou expirado)")
+      return NextResponse.json({ error: "Carrinho vazio" }, { status: 400 })
     }
 
-    // Cria a preferência no Mercado Pago
     const preference = await createMercadoPagoPreference(customerData, cart)
-
-    if (!preference) {
-      return NextResponse.json({ error: "Falha ao criar preferência" }, { status: 500 })
-    }
 
     return NextResponse.json(preference)
   } catch (error) {
