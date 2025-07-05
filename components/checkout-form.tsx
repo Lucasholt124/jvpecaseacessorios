@@ -18,6 +18,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2, CreditCard, MapPin, User } from "lucide-react";
+import { useSyncCartFromCookie } from "@/hooks/useSyncCart";
+
 
 interface CheckoutFormProps {
   cartTotal: number;
@@ -43,6 +45,7 @@ interface CustomerData {
 }
 
 export default function CheckoutForm({ cartTotal, cartItems }: CheckoutFormProps) {
+  useSyncCartFromCookie();
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1);
   const [customerData, setCustomerData] = useState<CustomerData>({

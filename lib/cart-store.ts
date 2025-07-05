@@ -1,15 +1,6 @@
 import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
-
-export interface CartItem {
-  id: string
-  name: string
-  price: number
-  image: string
-  slug: string
-  stock: number
-  quantity: number
-}
+import type { CartItem } from "./types"
 
 interface CartStore {
   items: CartItem[]
@@ -21,6 +12,7 @@ interface CartStore {
   getTotalItems: () => number
   getTotalPrice: () => number
   setIsOpen: (open: boolean) => void
+  setItems: (items: CartItem[]) => void
 }
 
 export const useCartStore = create<CartStore>()(
@@ -28,66 +20,63 @@ export const useCartStore = create<CartStore>()(
     (set, get) => ({
       items: [],
       isOpen: false,
-
       addItem: (newItem) => {
-        const existingItem = get().items.find((item) => item.id === newItem.id)
-
+        const items = Array.isArray(get().items) ? get().items : []
+        const existingItem = items.find((item) => item.id === newItem.id)
         if (existingItem) {
           if (existingItem.quantity < newItem.stock) {
             set((state) => ({
               items: state.items.map((item) =>
                 item.id === newItem.id
                   ? { ...item, quantity: item.quantity + 1 }
-                  : item,
+                  : item
               ),
             }))
           }
         } else {
           set((state) => ({
-            items: [...state.items, { ...newItem, quantity: 1 }],
+            items: [...items, { ...newItem, quantity: 1 }],
           }))
         }
       },
-
       removeItem: (id) => {
         set((state) => ({
           items: state.items.filter((item) => item.id !== id),
         }))
       },
-
       updateQuantity: (id, quantity) => {
         if (quantity <= 0) {
           get().removeItem(id)
           return
         }
-
         set((state) => ({
           items: state.items.map((item) =>
-            item.id === id ? { ...item, quantity } : item,
+            item.id === id ? { ...item, quantity } : item
           ),
         }))
       },
-
       clearCart: () => {
         set({ items: [] })
       },
-
       getTotalItems: () => {
-        return get().items.reduce((acc, item) => acc + item.quantity, 0)
+        const items = Array.isArray(get().items) ? get().items : []
+        return items.reduce((acc, item) => acc + item.quantity, 0)
       },
-
       getTotalPrice: () => {
-        return get().items.reduce((acc, item) => acc + item.price * item.quantity, 0)
+        const items = Array.isArray(get().items) ? get().items : []
+        return items.reduce((acc, item) => acc + item.price * item.quantity, 0)
       },
-
       setIsOpen: (open) => {
         set({ isOpen: open })
+      },
+      setItems: (items) => {
+        set({ items: Array.isArray(items) ? items : [] })
       },
     }),
     {
       name: "cart-storage",
       storage: createJSONStorage(() => localStorage),
       skipHydration: true,
-    },
-  ),
+    }
+  )
 )
