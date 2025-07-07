@@ -11,36 +11,30 @@ import CartSummary from "@/components/cart-summary-real"
 import type { CartItem } from "@/lib/types"
 
 
-interface LocalCartItem extends CartItem {
-  description?: string;
-}
-
 interface User {
   email?: string
   name?: string
 }
 
 interface CartClientProps {
-  initialCart: LocalCartItem[] // Usa LocalCartItem aqui
+  initialCart: CartItem[] // Usa CartItem direto
   user: User | null
 }
 
 export default function CartClient({ initialCart, user }: CartClientProps) {
-  const [cart, setCart] = useState<LocalCartItem[]>(initialCart) // Usa LocalCartItem aqui
+  const [cart, setCart] = useState<CartItem[]>(initialCart)
   const [loading, setLoading] = useState(false)
 
   async function updateCart(
     action: "add" | "remove" | "update",
     itemId: string,
     quantity?: number,
-    product?: any // Adicionado para lidar com a ação 'add' se ela for usada aqui futuramente
+    product?: any
   ) {
     setLoading(true)
     try {
-      const payload: any = { action, id: itemId, quantity };
-      if (product) {
-        payload.product = product; // Inclui o produto apenas para a ação 'add'
-      }
+      const payload: any = { action, id: itemId, quantity }
+      if (product) payload.product = product
 
       const res = await fetch("/api/cart", {
         method: "POST",
@@ -50,11 +44,9 @@ export default function CartClient({ initialCart, user }: CartClientProps) {
 
       const data = await res.json()
       if (data.success && Array.isArray(data.cart)) {
-        // Assume que data.cart também terá a propriedade description,
-        // pois ela vem do servidor.
-        setCart(data.cart as LocalCartItem[])
+        setCart(data.cart)
       } else {
-        alert("Erro ao atualizar o carrinho: " + (data.error || "Erro desconhecido"));
+        alert("Erro ao atualizar o carrinho: " + (data.error || "Erro desconhecido"))
       }
     } catch (error) {
       console.error(error)
@@ -63,13 +55,13 @@ export default function CartClient({ initialCart, user }: CartClientProps) {
     setLoading(false)
   }
 
-  function handleIncrease(item: LocalCartItem) { // Usa LocalCartItem aqui
+  function handleIncrease(item: CartItem) {
     const newQuantity = item.quantity + 1
     if (item.stock && newQuantity > item.stock) return
     updateCart("update", item.id, newQuantity)
   }
 
-  function handleDecrease(item: LocalCartItem) { // Usa LocalCartItem aqui
+  function handleDecrease(item: CartItem) {
     const newQuantity = item.quantity - 1
     if (newQuantity <= 0) {
       updateCart("remove", item.id)
@@ -78,7 +70,7 @@ export default function CartClient({ initialCart, user }: CartClientProps) {
     }
   }
 
-  function handleRemove(item: LocalCartItem) { // Usa LocalCartItem aqui
+  function handleRemove(item: CartItem) {
     updateCart("remove", item.id)
   }
 
@@ -113,7 +105,7 @@ export default function CartClient({ initialCart, user }: CartClientProps) {
                       <div className="flex-1">
                         <h3 className="font-semibold text-lg">{item.name}</h3>
                         <p className="text-gray-600 text-sm mb-2">
-                          {item.description ?? "Sem descrição"}
+                          {item.description}
                         </p>
                         <p className="font-bold text-lg text-green-600">
                           R$ {item.price.toFixed(2)}
@@ -138,10 +130,13 @@ export default function CartClient({ initialCart, user }: CartClientProps) {
                             size="sm"
                             aria-label={`Aumentar quantidade de ${item.name}`}
                             onClick={() =>
-                              !loading && !(item.stock && item.quantity >= item.stock) && handleIncrease(item)
+                              !loading &&
+                              !(item.stock && item.quantity >= item.stock) &&
+                              handleIncrease(item)
                             }
                             disabled={
-                              loading || (item.stock ? item.quantity >= item.stock : false)
+                              loading ||
+                              (item.stock ? item.quantity >= item.stock : false)
                             }
                           >
                             <Plus className="w-4 h-4" />

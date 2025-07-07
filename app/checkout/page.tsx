@@ -1,29 +1,22 @@
-"use client"
 
+import { getCart, getCartTotal, getCartItemsCount } from "@/lib/cart-actions"
 import CheckoutForm from "@/components/checkout-form"
-import { useCartStore } from "@/lib/cart-store"
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { redirect } from "next/navigation"
 
-export default function CheckoutPage() {
-  const router = useRouter()
-  const items = useCartStore((state) => state.items)
-  const totalPrice = useCartStore((state) => state.getTotalPrice())
-  const totalItems = useCartStore((state) => state.getTotalItems())
+export default async function CheckoutPage() {
+  const cart = await getCart()
 
-  useEffect(() => {
-    if (items.length === 0) {
-      router.push("/cart")
-    }
-  }, [items, router])
-
-  if (items.length === 0) {
-    return null // Ou loading...
+  // Redireciona se o carrinho estiver vazio (baseado no cookie)
+  if (!cart || cart.length === 0) {
+    redirect("/cart")
   }
+
+  const cartTotal = await getCartTotal()
+  const cartItems = await getCartItemsCount()
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <CheckoutForm cartTotal={totalPrice} cartItems={totalItems} />
+      <CheckoutForm cartTotal={cartTotal} cartItems={cartItems} />
     </div>
   )
 }

@@ -1,53 +1,52 @@
-"use client";
+"use client"
 
-import type React from "react";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "react-hot-toast";
-import { AnimatePresence, motion } from "framer-motion";
+import type React from "react"
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { toast } from "react-hot-toast"
+import { AnimatePresence, motion } from "framer-motion"
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Loader2, CreditCard, MapPin, User } from "lucide-react";
-import { useSyncCartFromCookie } from "@/hooks/useSyncCart";
-
+} from "@/components/ui/select"
+import { Loader2, CreditCard, MapPin, User } from "lucide-react"
+import { useCartStore } from "@/lib/cart-store"
+import { useSyncCartFromCookie } from "@/hooks/useSyncCart"
 
 interface CheckoutFormProps {
-  cartTotal: number;
-  cartItems: number;
+  cartTotal: number
+  cartItems: number
 }
 
 interface CustomerData {
-  email: string;
-  name: string;
+  email: string
+  name: string
   phone: {
-    area_code: string;
-    number: string;
-  };
+    area_code: string
+    number: string
+  }
   address: {
-    zip_code: string;
-    street_name: string;
-    street_number: string;
-    neighborhood: string;
-    city: string;
-    state: string;
-    complement?: string;
-  };
+    zip_code: string
+    street_name: string
+    street_number: string
+    neighborhood: string
+    city: string
+    state: string
+    complement?: string
+  }
 }
 
 export default function CheckoutForm({ cartTotal, cartItems }: CheckoutFormProps) {
-  useSyncCartFromCookie();
-  const [isLoading, setIsLoading] = useState(false);
-  const [step, setStep] = useState(1);
+  const [isLoading, setIsLoading] = useState(false)
+  const [step, setStep] = useState(1)
   const [customerData, setCustomerData] = useState<CustomerData>({
     email: "",
     name: "",
@@ -61,9 +60,25 @@ export default function CheckoutForm({ cartTotal, cartItems }: CheckoutFormProps
       state: "",
       complement: "",
     },
-  });
+  })
 
-  const router = useRouter();
+  const router = useRouter()
+  const [loadingCart, setLoadingCart] = useState(true)
+  const items = useCartStore((s) => s.items)
+
+  useEffect(() => {
+    const sync = async () => {
+      await useSyncCartFromCookie()
+      setLoadingCart(false)
+    }
+    sync()
+  }, [])
+
+  useEffect(() => {
+    if (!loadingCart && items.length === 0) {
+      router.push("/cart")
+    }
+  }, [loadingCart, items, router])
 
   const handleInputChange = (field: string, value: string, nested?: string) => {
     setCustomerData((prev) => {
@@ -74,20 +89,20 @@ export default function CheckoutForm({ cartTotal, cartItems }: CheckoutFormProps
             ...(prev[nested as keyof CustomerData] as object),
             [field]: value,
           },
-        };
+        }
       }
-      return { ...prev, [field]: value };
-    });
-  };
+      return { ...prev, [field]: value }
+    })
+  }
 
   const handleCEPChange = async (cep: string) => {
-    const cleanCEP = cep.replace(/\D/g, "");
-    handleInputChange("zip_code", cleanCEP, "address");
+    const cleanCEP = cep.replace(/\D/g, "")
+    handleInputChange("zip_code", cleanCEP, "address")
 
     if (cleanCEP.length === 8) {
       try {
-        const response = await fetch(`https://viacep.com.br/ws/${cleanCEP}/json/`);
-        const data = await response.json();
+        const response = await fetch(`https://viacep.com.br/ws/${cleanCEP}/json/`)
+        const data = await response.json()
 
         if (!data.erro) {
           setCustomerData((prev) => ({
@@ -99,60 +114,65 @@ export default function CheckoutForm({ cartTotal, cartItems }: CheckoutFormProps
               city: data.localidade,
               state: data.uf,
             },
-          }));
+          }))
         }
       } catch (error) {
-        console.error("Erro ao buscar CEP:", error);
-        toast.error("Não foi possível buscar o endereço");
+        console.error("Erro ao buscar CEP:", error)
+        toast.error("Não foi possível buscar o endereço")
       }
     }
-  };
+  }
 
   const validateStep1 = () => {
-    const { name, email, phone } = customerData;
-    return name && email && phone.area_code && phone.number;
-  };
+    const { name, email, phone } = customerData
+    return name && email && phone.area_code && phone.number
+  }
 
   const validateStep2 = () => {
-    const a = customerData.address;
-    return a.zip_code && a.street_name && a.street_number && a.neighborhood && a.city && a.state;
-  };
+    const a = customerData.address
+    return a.zip_code && a.street_name && a.street_number && a.neighborhood && a.city && a.state
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validateStep2()) return toast.error("Preencha todos os campos obrigatórios");
+    e.preventDefault()
+    if (!validateStep2()) return toast.error("Preencha todos os campos obrigatórios")
 
-    setIsLoading(true);
+    setIsLoading(true)
     try {
       const response = await fetch("/api/mercadopago/create-preference", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  credentials: "include", // ← ESSENCIAL!
-  body: JSON.stringify(customerData),
-})
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(customerData),
+      })
 
-      if (!response.ok) throw new Error("Erro ao processar checkout");
+      if (!response.ok) throw new Error("Erro ao processar checkout")
 
-      const { initPoint, sandboxInitPoint } = await response.json();
-      const isProd = process.env.NODE_ENV === "production";
-      const checkoutUrl = isProd ? initPoint : sandboxInitPoint;
+      const { initPoint, sandboxInitPoint } = await response.json()
+      const isProd = process.env.NODE_ENV === "production"
+      const checkoutUrl = isProd ? initPoint : sandboxInitPoint
 
       const allowedDomains = [
         "https://www.mercadopago.com",
         "https://www.mercadopago.com.br",
         "https://sandbox.mercadopago.com",
-      ];
-      const isValid = allowedDomains.some((domain) => checkoutUrl?.startsWith(domain));
-      if (!isValid) throw new Error("URL de redirecionamento inválida.");
+      ]
+      const isValid = allowedDomains.some((domain) => checkoutUrl?.startsWith(domain))
+      if (!isValid) throw new Error("URL de redirecionamento inválida.")
 
-      window.location.href = checkoutUrl;
+      window.location.href = checkoutUrl
     } catch (error: any) {
-      console.error("Erro no checkout:", error);
-      toast.error(error?.message || "Erro ao processar pagamento");
+      console.error("Erro no checkout:", error)
+      toast.error(error?.message || "Erro ao processar pagamento")
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
+
+  if (loadingCart || items.length === 0) {
+    return <div className="text-center py-20 text-gray-500">Carregando...</div>
+  }
+
 
   return (
     <div className="max-w-4xl mx-auto p-6">

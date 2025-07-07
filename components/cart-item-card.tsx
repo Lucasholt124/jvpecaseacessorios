@@ -21,16 +21,16 @@ export default function CartItemCard({ item }: CartItemCardProps) {
   const router = useRouter()
 
   const handleQuantityChange = async (newQuantity: number) => {
-    if (newQuantity < 1) return
+    if (newQuantity < 1 || newQuantity > item.stock) return
     setIsUpdating(true)
     setQuantity(newQuantity)
 
     try {
-      await updateCartQuantity(item.product._id, newQuantity)
+      await updateCartQuantity(item.id, newQuantity)
       router.refresh()
     } catch (error) {
       console.error("Erro ao atualizar quantidade:", error)
-      setQuantity(item.quantity)
+      setQuantity(item.quantity) // restaura
     } finally {
       setIsUpdating(false)
     }
@@ -39,7 +39,7 @@ export default function CartItemCard({ item }: CartItemCardProps) {
   const handleRemove = async () => {
     setIsUpdating(true)
     try {
-      await removeFromCart(item.product._id)
+      await removeFromCart(item.id)
       router.refresh()
     } catch (error) {
       console.error("Erro ao remover item:", error)
@@ -48,7 +48,7 @@ export default function CartItemCard({ item }: CartItemCardProps) {
     }
   }
 
-  const subtotal = item.product.price * quantity
+  const subtotal = item.price * quantity
 
   return (
     <Card className={`transition-opacity duration-300 ${isUpdating ? "opacity-50 pointer-events-none" : ""}`}>
@@ -57,8 +57,8 @@ export default function CartItemCard({ item }: CartItemCardProps) {
           {/* Imagem do Produto */}
           <div className="relative w-24 h-24 flex-shrink-0">
             <Image
-              src={item.product.image || "/placeholder.svg"}
-              alt={item.product.name || "Produto"}
+              src={item.image || "/placeholder.svg"}
+              alt={item.name || "Produto"}
               fill
               className="object-cover rounded-lg"
               sizes="96px"
@@ -70,13 +70,13 @@ export default function CartItemCard({ item }: CartItemCardProps) {
           <div className="flex-1 flex flex-col gap-3 justify-between min-w-0">
             <div className="flex justify-between gap-4">
               <div className="min-w-0">
-                <h3 className="font-semibold text-lg mb-1 line-clamp-2">{item.product.name}</h3>
-                {item.product.description && (
-                  <p className="text-gray-600 text-sm mb-1 line-clamp-2">{item.product.description}</p>
+                <h3 className="font-semibold text-lg mb-1 line-clamp-2">{item.name}</h3>
+                {item.description && (
+                  <p className="text-gray-600 text-sm mb-1 line-clamp-2">{item.description}</p>
                 )}
               </div>
 
-              {/* Botão de remover (acessível no mobile também) */}
+              {/* Botão de remover */}
               <Button
                 variant="ghost"
                 size="sm"
@@ -90,7 +90,7 @@ export default function CartItemCard({ item }: CartItemCardProps) {
 
             {/* Preço unitário */}
             <div className="flex items-center gap-2">
-              <span className="text-lg font-bold text-primary">{formatPrice(item.product.price)}</span>
+              <span className="text-lg font-bold text-primary">{formatPrice(item.price)}</span>
               <span className="text-sm text-gray-500">cada</span>
             </div>
 
@@ -110,6 +110,7 @@ export default function CartItemCard({ item }: CartItemCardProps) {
                 <Input
                   type="number"
                   min="1"
+                  max={item.stock}
                   value={quantity}
                   onChange={(e) => {
                     const value = parseInt(e.target.value)
@@ -124,7 +125,7 @@ export default function CartItemCard({ item }: CartItemCardProps) {
                   variant="outline"
                   size="sm"
                   onClick={() => handleQuantityChange(quantity + 1)}
-                  disabled={isUpdating}
+                  disabled={isUpdating || quantity >= item.stock}
                 >
                   <Plus className="w-4 h-4" />
                 </Button>

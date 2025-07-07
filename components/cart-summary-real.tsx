@@ -21,14 +21,19 @@ export default function CartSummary({ cart, userEmail, userName }: CartSummaryPr
   const [shippingMessage, setShippingMessage] = useState("")
 
   useEffect(() => {
-    const newSubtotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0)
-    const newShipping = calculateShipping(newSubtotal)
-    const newTotal = newSubtotal + newShipping
+    const updateValues = () => {
+      const newSubtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
+      const newShipping = calculateShipping(newSubtotal)
+      const newTotal = newSubtotal + newShipping
+      const newMessage = getShippingMessage(newSubtotal)
 
-    setSubtotal(newSubtotal)
-    setShipping(newShipping)
-    setTotal(newTotal)
-    setShippingMessage(getShippingMessage(newSubtotal))
+      setSubtotal(newSubtotal)
+      setShipping(newShipping)
+      setTotal(newTotal)
+      setShippingMessage(newMessage)
+    }
+
+    updateValues()
   }, [cart])
 
   if (cart.length === 0) {
@@ -51,7 +56,9 @@ export default function CartSummary({ cart, userEmail, userName }: CartSummaryPr
         <div className="space-y-3 text-sm">
           {/* Subtotal */}
           <div className="flex justify-between">
-            <span>Subtotal ({cart.length} {cart.length === 1 ? "item" : "itens"})</span>
+            <span>
+              Subtotal ({cart.length} {cart.length === 1 ? "item" : "itens"})
+            </span>
             <span className="font-medium">{formatPrice(subtotal)}</span>
           </div>
 
@@ -92,8 +99,8 @@ export default function CartSummary({ cart, userEmail, userName }: CartSummaryPr
 
         {/* Informações de segurança */}
         <div className="space-y-1 text-xs text-gray-500 text-center mt-4">
-          <p>✅ Pagamento seguro processado pelo Mercado Pago</p>
-          <p>🚚 Frete GRÁTIS para pedidos acima de R$ 100,00</p>
+          <p>✅ Pagamento seguro via Mercado Pago</p>
+          <p>🚚 Frete grátis em compras acima de R$ 100,00</p>
           <p>📦 Entrega estimada: 5 a 10 dias úteis</p>
         </div>
       </CardContent>

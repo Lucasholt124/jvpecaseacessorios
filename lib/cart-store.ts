@@ -1,3 +1,5 @@
+"use client"
+
 import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
 import type { CartItem } from "./types"
@@ -20,57 +22,70 @@ export const useCartStore = create<CartStore>()(
     (set, get) => ({
       items: [],
       isOpen: false,
+
       addItem: (newItem) => {
-        const items = Array.isArray(get().items) ? get().items : []
-        const existingItem = items.find((item) => item.id === newItem.id)
-        if (existingItem) {
-          if (existingItem.quantity < newItem.stock) {
-            set((state) => ({
-              items: state.items.map((item) =>
+        const items = get().items ?? []
+        const existing = items.find((item) => item.id === newItem.id)
+
+        if (existing) {
+          if (existing.quantity < newItem.stock) {
+            set({
+              items: items.map((item) =>
                 item.id === newItem.id
                   ? { ...item, quantity: item.quantity + 1 }
                   : item
               ),
-            }))
+            })
           }
         } else {
-          set((state) => ({
+          set({
             items: [...items, { ...newItem, quantity: 1 }],
-          }))
+          })
         }
       },
+
       removeItem: (id) => {
-        set((state) => ({
-          items: state.items.filter((item) => item.id !== id),
-        }))
+        set({
+          items: get().items.filter((item) => item.id !== id),
+        })
       },
+
       updateQuantity: (id, quantity) => {
         if (quantity <= 0) {
           get().removeItem(id)
-          return
+        } else {
+          set({
+            items: get().items.map((item) =>
+              item.id === id ? { ...item, quantity } : item
+            ),
+          })
         }
-        set((state) => ({
-          items: state.items.map((item) =>
-            item.id === id ? { ...item, quantity } : item
-          ),
-        }))
       },
+
       clearCart: () => {
         set({ items: [] })
       },
+
       getTotalItems: () => {
-        const items = Array.isArray(get().items) ? get().items : []
-        return items.reduce((acc, item) => acc + item.quantity, 0)
+        return get().items.reduce((total, item) => total + (item.quantity ?? 0), 0)
       },
+
       getTotalPrice: () => {
-        const items = Array.isArray(get().items) ? get().items : []
-        return items.reduce((acc, item) => acc + item.price * item.quantity, 0)
+        return get().items.reduce(
+          (total, item) => total + (item.price ?? 0) * (item.quantity ?? 0),
+          0
+        )
       },
+
       setIsOpen: (open) => {
         set({ isOpen: open })
       },
+
       setItems: (items) => {
-        set({ items: Array.isArray(items) ? items : [] })
+        const validItems = Array.isArray(items)
+          ? items.filter((item) => item?.id && item?.quantity >= 0)
+          : []
+        set({ items: validItems })
       },
     }),
     {

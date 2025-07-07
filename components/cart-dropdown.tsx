@@ -1,4 +1,4 @@
-// cart-dropdown.tsx
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -29,31 +29,30 @@ export default function CartDropdown() {
     clearCart,
   } = useCartStore();
 
-  // Carrega carrinho inicial do cookie (server)
   useEffect(() => {
+    if (items.length > 0) return;
+
     async function fetchCart() {
       try {
         const res = await fetch("/api/cart", { credentials: "include" });
         if (!res.ok) throw new Error("Erro ao buscar carrinho");
         const data = await res.json();
-        // Corrige: o dado do carrinho vem dentro da propriedade 'cart'
         if (Array.isArray(data.cart)) {
           setItems(data.cart);
         } else {
           console.error("Dados do carrinho recebidos não são um array:", data);
-          setItems([]); // Limpa o carrinho localmente em caso de dados inválidos
+          setItems([]);
         }
       } catch (err) {
         console.error(err);
       }
     }
     fetchCart();
-  }, [setItems]);
+  }, [items.length, setItems]);
 
   const handleClearCart = async () => {
     setIsClearing(true);
     try {
-      // Mudar para método DELETE no endpoint /api/cart
       const res = await fetch("/api/cart", { method: "DELETE", credentials: "include" });
       if (!res.ok) throw new Error("Erro ao limpar carrinho");
       clearCart();
@@ -67,21 +66,16 @@ export default function CartDropdown() {
   };
 
   const handleQuantityChange = async (id: string, quantity: number) => {
-    if (quantity <= 0) return; // Garante que a quantidade não seja zero ou negativa
+    if (quantity <= 0) return;
     try {
-      const res = await fetch("/api/cart", { // Mudar para /api/cart
+      const res = await fetch("/api/cart", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ action: "update", id, quantity }), // Adicionar action
+        body: JSON.stringify({ action: "update", id, quantity }),
       });
       if (!res.ok) throw new Error("Erro ao atualizar item");
-      // Se a API retornar o carrinho atualizado, você pode usá-lo para `setItems`
-      // const data = await res.json();
-      // if (data.success && Array.isArray(data.cart)) {
-      //   setItems(data.cart);
-      // }
-      updateQuantity(id, quantity); // Atualiza o estado local do Zustand
+      updateQuantity(id, quantity);
     } catch (err) {
       console.error(err);
       toast.error("Erro ao atualizar item");
@@ -90,18 +84,14 @@ export default function CartDropdown() {
 
   const handleRemove = async (id: string) => {
     try {
-      const res = await fetch("/api/cart", { // Mudar para /api/cart
+      const res = await fetch("/api/cart", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ action: "remove", id }), // Adicionar action
+        body: JSON.stringify({ action: "remove", id }),
       });
       if (!res.ok) throw new Error("Erro ao remover item");
-      // const data = await res.json();
-      // if (data.success && Array.isArray(data.cart)) {
-      //   setItems(data.cart);
-      // }
-      removeItem(id); // Atualiza o estado local do Zustand
+      removeItem(id);
       toast.success("Item removido do carrinho");
     } catch (err) {
       console.error(err);
@@ -166,6 +156,7 @@ export default function CartDropdown() {
                           fill
                           className="object-cover rounded"
                           sizes="96px"
+                          onError={(e) => (e.currentTarget.src = "/placeholder.svg")}
                           unoptimized
                         />
                       </div>

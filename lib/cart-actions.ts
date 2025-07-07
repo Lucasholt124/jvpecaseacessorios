@@ -8,7 +8,7 @@ import { serialize } from "cookie"
 // Pega os itens do carrinho a partir do cookie
 export async function getCart(): Promise<CartItem[]> {
   try {
-    const cookieStore = await cookies() // <-- uso de await necessário
+    const cookieStore = cookies()
     const cartCookie = cookieStore.get("cart")
 
     if (!cartCookie?.value) return []
@@ -47,12 +47,21 @@ export async function addToCart(product: Product, quantity = 1) {
     }
 
     const currentCart = await getCart()
-    const existingItemIndex = currentCart.findIndex((item) => item.product._id === product._id)
+    const existingItemIndex = currentCart.findIndex(item => item.id === product._id)
 
     if (existingItemIndex > -1) {
       currentCart[existingItemIndex].quantity += quantity
     } else {
-      currentCart.push({ product, quantity })
+      currentCart.push({
+        id: product._id,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        description: product.description,
+        slug: product.slug,
+        stock: (product as any).stock ?? 9999, // se não existir stock, valor padrão
+        quantity,
+      })
     }
 
     return createCartResponse(currentCart)
@@ -70,7 +79,7 @@ export async function removeFromCart(productId: string) {
     }
 
     const currentCart = await getCart()
-    const updatedCart = currentCart.filter((item) => item.product._id !== productId)
+    const updatedCart = currentCart.filter(item => item.id !== productId)
 
     return createCartResponse(updatedCart)
   } catch (error) {
@@ -87,7 +96,7 @@ export async function updateCartQuantity(productId: string, quantity: number) {
     }
 
     const currentCart = await getCart()
-    const itemIndex = currentCart.findIndex((item) => item.product._id === productId)
+    const itemIndex = currentCart.findIndex(item => item.id === productId)
 
     if (itemIndex > -1) {
       if (quantity <= 0) {
@@ -128,7 +137,7 @@ export async function clearCart() {
 export async function getCartTotal(): Promise<number> {
   try {
     const cart = await getCart()
-    return cart.reduce((total, item) => total + (item.product.price || 0) * item.quantity, 0)
+    return cart.reduce((total, item) => total + (item.price || 0) * item.quantity, 0)
   } catch (error) {
     console.error("Erro ao calcular total:", error)
     return 0

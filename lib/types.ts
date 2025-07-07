@@ -8,6 +8,7 @@ export interface Product {
 }
 
 export interface CartItem {
+  description: any
   id: string
   name: string
   price: number

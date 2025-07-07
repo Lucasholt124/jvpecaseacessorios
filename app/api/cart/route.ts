@@ -8,7 +8,7 @@ const COOKIE_MAX_AGE = 60 * 60 * 24 * 7 // 7 dias
 function parseCartCookie(cookieValue: string | undefined): CartItem[] {
   if (!cookieValue) return []
   try {
-    const parsed = JSON.parse(cookieValue)
+    const parsed = JSON.parse(decodeURIComponent(cookieValue))
     if (Array.isArray(parsed)) return parsed
   } catch (err) {
     console.error("Erro ao fazer parse do cookie do carrinho:", err)
@@ -17,13 +17,14 @@ function parseCartCookie(cookieValue: string | undefined): CartItem[] {
 }
 
 function serializeCartCookie(cart: CartItem[]) {
-  return `cart=${encodeURIComponent(JSON.stringify(cart))}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${COOKIE_MAX_AGE}`
+  return `${COOKIE_NAME}=${encodeURIComponent(JSON.stringify(cart))}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${COOKIE_MAX_AGE}`
 }
 
 export async function GET() {
   const cookieStore = cookies()
   const cartCookie = cookieStore.get(COOKIE_NAME)?.value
   const cart = parseCartCookie(cartCookie)
+
   return NextResponse.json({ success: true, cart })
 }
 
@@ -48,11 +49,13 @@ export async function POST(request: Request) {
         }
         break
       }
+
       case "remove": {
         if (!id) throw new Error("id é obrigatório para remover")
         cart = cart.filter((item) => item.id !== id)
         break
       }
+
       case "update": {
         if (!id) throw new Error("id é obrigatório para atualizar")
         if (quantity === undefined || quantity < 0) throw new Error("quantity inválido")
@@ -66,16 +69,25 @@ export async function POST(request: Request) {
         }
         break
       }
+
       case "clear": {
         cart = []
         break
       }
+
+      case "replace": {
+        // Substitui todo o carrinho (usado para sincronizar Zustand no cliente com cookie)
+        if (!Array.isArray(product)) throw new Error("Formato inválido para replace")
+        cart = product
+        break
+      }
+
       default:
         throw new Error("Ação inválida")
     }
 
     const response = NextResponse.json({ success: true, cart })
-    response.headers.append("Set-Cookie", serializeCartCookie(cart))
+    response.headers.set("Set-Cookie", serializeCartCookie(cart))
     return response
   } catch (error) {
     console.error("Erro ao processar ação do carrinho:", error)
@@ -88,6 +100,6 @@ export async function POST(request: Request) {
 
 export async function DELETE() {
   const response = NextResponse.json({ success: true, message: "Carrinho limpo" })
-  response.headers.append("Set-Cookie", `cart=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`)
+  response.headers.set("Set-Cookie", `${COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`)
   return response
 }
