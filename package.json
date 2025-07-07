@@ -34,7 +34,7 @@
     "@sanity/visual-editing": "^2.15.0",
     "@sanity/visual-editing-csm": "^2.0.18",
     "@sanity/visual-editing-types": "^1.1.0",
-    "@umami/node": "^0.1.0",
+    "@umami/node": "^0.4.0",
     "autoprefixer": "^10.4.21",
     "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.0",
