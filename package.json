@@ -30,7 +30,7 @@
     "@sanity/image-url": "^1.0.2",
     "@sanity/presentation-comlink": "^1.0.21",
     "@sanity/preview-url-secret": "^2.1.11",
-    "@sanity/vision": "^3.22.1",
+    "@sanity/vision": "^3.97.1",
     "@sanity/visual-editing": "^2.15.0",
     "@sanity/visual-editing-csm": "^2.0.18",
     "@sanity/visual-editing-types": "^1.1.0",
