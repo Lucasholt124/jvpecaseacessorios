@@ -3,7 +3,7 @@
 Sistema de comércio eletrônico completo desenvolvido para o segmento de autopeças pesadas (caminhões). O projeto foi focado em robustez, facilidade de gerenciamento de catálogo complexo e integração de pagamentos.
 
 ## 🌐 Live Demo
-Confira o projeto em produção: [jvpecaseacessorios.vercel.app](https://jvpecaseacessorios.vercel.app)
+Confira o projeto em produção: [jvpecaseacessorios.vercel.app](https://www.jvpecaseacessorios.com.br/)
 
 ## 🛠️ Stack Tecnológica
 
